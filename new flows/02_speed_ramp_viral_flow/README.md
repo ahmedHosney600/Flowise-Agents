@@ -2,6 +2,8 @@
 
 > A specialized post-production flow for viral, high-energy short-form content built around speed ramping — derived from Elgendy Academy Workshop Level 11 (Viral Speed Ramp) and Level 10 (Trendy Transitions).
 
+> **🔌 Import directly into Flowise**: [Speed_Ramp_Viral_Flow_v1.json](./Speed_Ramp_Viral_Flow_v1.json) — 11 nodes, all prompts pre-wired.
+
 ---
 
 ## Overview

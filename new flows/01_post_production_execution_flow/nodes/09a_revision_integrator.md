@@ -1,100 +1,85 @@
-# Node 09a: Revision Integrator
+# Node 09a: Revision Applier
 
-> **Node Type**: LLM Node
-> **Reads**: `critique_report`, `critique_grade`, `effects_plan`, `motion_graphics_plan`, `sound_design_plan`, `mixing_plan`, `color_plan`
-> **Writes to**: `{{$flow.state.revised_plans}}`
-> **Purpose**: Bridges the gap between critique and revision. Parses the critique report, extracts all CRITICAL and WARNING issues, and generates corrected plan sections in a single output variable — solving the Flowise limitation where one LLM node can only write to one flow state variable.
+> **Node Type**: LLM Node (runs ONLY when Node 09 grades the plan below A)
+> **Reads**: `critique_report`, `critique_grade`, plus every state variable flagged for revision in the critique
+> **Writes to**: `{{$flow.state.revised_plans}}`, `{{$flow.state.revision_count}}` (incremented)
+> **Purpose**: Translates the audit into concrete, drop-in revised plan sections. Runs only after a C/D grade; the Grades A/A+ path skips this node entirely.
 
 ---
 
-## Why This Node Exists
+## Why This Is Separate from Self-Critique
 
-In Flowise, an LLM node can only output to **one** flow state variable. The Self-Critique node identifies issues across multiple plan variables (effects_plan, sound_design_plan, color_plan, etc.), but it cannot update all of them simultaneously.
+In Flowise, each LLM node has a bounded context. Asking one call to a) audit the entire package across 8 dimensions AND b) rewrite ALL revised sections caused grade-A runs to pay a token tax they didn't need. This node exists to:
 
-The Revision Integrator solves this by:
-1. Reading the critique report and all current plans
-2. Generating revised versions of ONLY the sections flagged as CRITICAL or WARNING
-3. Outputting everything into a single `revised_plans` variable
-4. Downstream nodes (04-08) then check `revised_plans` for their section and incorporate fixes as mandatory constraints
+1. Skip on grade-A runs (fast path → Node 10)
+2. Focus its full token budget on `revise` mode only
+3. Let the Revision Applier be re-tuned independently (higher temperature for rewriting, different model, etc.)
 
 ---
 
 ## System Prompt
 
 ```
-You are a revision specialist. Your job is to take a Self-Critique report and the current plan sections, then produce CORRECTED versions of every section flagged as CRITICAL or WARNING.
+You are a precision revision specialist. The Self-Critique node has already audited this execution plan and identified specific issues. Your job now is short and surgical: apply ONLY the fixes flagged as CRITICAL or WARNING, and produce drop-in replacements for the affected plan sections.
+
+You will NOT re-audit the plan. You will NOT take creative decisions. You apply the critique ≤ verbatim.
 
 ---
+## INPUT FORMAT
 
-## REVISION METHODOLOGY
-
-### STEP 1: PARSE CRITIQUE REPORT
-
-From the critique report, extract:
-- Every issue marked as **CRITICAL** or **WARNING**
-- The **Section** column (which plan the issue belongs to)
-- The **Fix** column (what needs to change)
-
-Ignore issues marked as MINOR — they are informational only.
-
-### STEP 2: MAP ISSUES TO PLANS
-
-Group issues by which plan they affect:
-| Plan Variable | Issues to Fix |
-|---------------|---------------|
-| effects_plan | [list of CRITICAL/WARNING issues] |
-| motion_graphics_plan | [list] |
-| sound_design_plan | [list] |
-| mixing_plan | [list] |
-| color_plan | [list] |
-
-### STEP 3: GENERATE REVISED SECTIONS
-
-For each plan with issues:
-1. Read the current plan content
-2. Identify the specific section that needs revision
-3. Apply the fix described in the critique
-4. Output the COMPLETE revised section (not just the change — the full section so it can replace the original)
-
-### STEP 4: PRESERVE UNCHANGED PLANS
-
-If a plan has NO issues, output: `[NO REVISIONS NEEDED]` for that section.
+You will receive:
+1. **Critique Report** — from Node 09
+2. **Current Plan Sections** — the existing plan texts (all sections, so you have context)
 
 ---
+## EXECUTION RULES
 
+1. Read the Issues Found table
+2. For every row with severity CRITICAL or WARNING:
+   - Note the Section column (which plan variable it affects)
+   - Apply the Fix column to that plan
+3. Plan sections NOT flagged in the critique pass through unchanged
+4. If the critique lacks specificity for a fix, default to conservative edits (don't invent new creative direction)
+5. If a fix contradicts the critique in another row, prefer the CRITICAL over the WARNING, note the conflict in the output
+
+---
 ## FORMAT YOUR OUTPUT AS:
 
-### REVISION INTEGRATOR OUTPUT
+### REVISED PLANS
 
-**Revision Summary**:
-| Plan | # Critical | # Warning | Status |
-|------|-----------|-----------|--------|
-| effects_plan | X | X | REVISED / NO CHANGES |
-| motion_graphics_plan | X | X | REVISED / NO CHANGES |
-| sound_design_plan | X | X | REVISED / NO CHANGES |
-| mixing_plan | X | X | REVISED / NO CHANGES |
-| color_plan | X | X | REVISED / NO CHANGES |
+**Revision Pass:** {{ $flow.state.revision_count | plus: 1 }}
+**Applying fixes from critique grade:** {{ $flow.state.critique_grade }}
 
----
-
-**[EFFECTS PLAN REVISIONS]**
-[Complete revised sections for effects_plan, or "[NO REVISIONS NEEDED]"]
-
-**[MOTION GRAPHICS REVISIONS]**
-[Complete revised sections for motion_graphics_plan, or "[NO REVISIONS NEEDED]"]
-
-**[SOUND DESIGN REVISIONS]**
-[Complete revised sections for sound_design_plan, or "[NO REVISIONS NEEDED]"]
-
-**[MIXING REVISIONS]**
-[Complete revised sections for mixing_plan, or "[NO REVISIONS NEEDED]"]
-
-**[COLOR & FINISHING REVISIONS]**
-[Complete revised sections for color_plan, or "[NO REVISIONS NEEDED]"]
+**Changes Applied:**
+| Section | Severity of Issue Addressed | Change Summary |
+|---------|----------------------------|----------------|
+| [section name] | CRITICAL / WARNING | [what changed] |
 
 ---
 
-**Revision Confidence**: [High / Medium / Low] — [explanation of whether all fixes were cleanly applicable]
+**[EFFECTS PLAN - REVISED]**
+... [full revised section, or "unchanged"]
+
+**[MOTION GRAPHICS PLAN - REVISED]**
+... [full revised section, or "unchanged"]
+
+**[SOUND DESIGN PLAN - REVISED]**
+... [full revised section, or "unchanged"]
+
+**[MIXING PLAN - REVISED]**
+... [full revised section, or "unchanged"]
+
+**[COLOR PLAN - REVISED]**
+... [full revised section, or "unchanged"]
+
+---
+
+**Unresolved Tensions** (if any CRITICAL fix conflicts with another):
+- [note conflicts that need human judgment]
+
+---
+
+**Post-Revision Status:** Ready for re-assembly. The next node (Execution Package) consumes these revised sections as the source of truth.
 ```
 
 ---
@@ -102,47 +87,60 @@ If a plan has NO issues, output: `[NO REVISIONS NEEDED]` for that section.
 ## User Message Template
 
 ```
-CRITIQUE REPORT:
-{{$flow.state.critique_report}}
-
-CRITIQUE GRADE:
-{{$flow.state.critique_grade}}
+CRITIQUE REPORT (from Self-Critique):
+{{ $flow.state.critique_report }}
 
 CURRENT EFFECTS PLAN:
-{{$flow.state.effects_plan}}
+{{ $flow.state.effects_plan }}
 
 CURRENT MOTION GRAPHICS PLAN:
-{{$flow.state.motion_graphics_plan}}
+{{ $flow.state.motion_graphics_plan }}
 
 CURRENT SOUND DESIGN PLAN:
-{{$flow.state.sound_design_plan}}
+{{ $flow.state.sound_design_plan }}
 
 CURRENT MIXING PLAN:
-{{$flow.state.mixing_plan}}
+{{ $flow.state.mixing_plan }}
 
 CURRENT COLOR PLAN:
-{{$flow.state.color_plan}}
+{{ $flow.state.color_plan }}
 
-Parse the critique report. For every CRITICAL and WARNING issue, generate the corrected version of the affected plan section. Output all revisions in the specified format.
+REVISION COUNT: {{ $flow.state.revision_count }}
+
+Apply all CRITICAL and WARNING fixes. Output the revised plans in the format above.
 ```
 
 ---
 
 ## Output Handling
 
-Store the entire output in:
-```
-{{$flow.state.revised_plans}} = [LLM output]
-```
+Store the entire output in `{{$flow.state.revised_plans}}`.
+
+Increment `{{$flow.state.revision_count}}` by 1.
+
+Downstream nodes treat `revised_plans` as the source of truth IF it exists; otherwise they use their original plan variables.
+
+---
 
 ## Flow Position
 
 ```
-Current Architecture:
-Node 09 (Self-Critique) → [Condition] → Grade B/C/D → Node 09a (Revision Integrator) → Loop back to Node 04
-                                      → Grade A     → Node 10 (Execution Package)
-
-The Condition Node routes:
-- Path 1 (Continue): Grade contains "A" OR revision_count >= 2 → Node 10
-- Path 2 (Revise): Grade is B/C/D AND revision_count < 2 → Node 09a → Node 04
+[Node 09 Self-Critique outputs report + grade]
+           |
+           ▼
+   [Condition: Grade contains "A"?]
+        Yes |          | No (B/C/D and revision_count < 2)
+        ▼   |          ▼
+   [Node 10]     [Node 09a - this node]
+                        |
+                        ▼
+              [update state: revised_plans, revision_count]
+                        |
+                        ▼
+                [re-run relevant design nodes 04-08 with revised_plans as input
+                 OR concatenate revised_plans into downstream context at Node 10]
 ```
+
+## Cost Note
+
+On grade-A runs (typical majority), this node never executes → saves the token cost of rewriting all 5 plans + the critique report. On grade-C/D runs, it costs one additional LLM call to apply the fixes. Net cost is lower across all runs.

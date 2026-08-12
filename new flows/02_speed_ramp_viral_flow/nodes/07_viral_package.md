@@ -44,6 +44,20 @@ Produce the FINAL VIRAL EDIT PACKAGE in this exact format:
 ### 6. SOUND DESIGN
 [From Sound & Finishing — include SFX placement, music notes, silence moments]
 
+**Sound Sourcing Shopping List** (every sound the editor needs to find or license):
+| # | Sound Needed | Category | Search Terms | Recommended Source | Priority |
+|---|-------------|----------|-------------|-------------------|----------|
+| 1 | [e.g., "Cinematic sub-drop / bass slam"] | Hits & Impacts | "cinematic sub drop", "bass slam", "deep hit" | Epidemic Sound, Splice, Artlist | Must-have |
+| 2 | [e.g., "Riser whoosh ascending 2s"] | SFX / Riser | "riser whoosh", "sweep up", "tension build" | Artlist, Freesound.org | Must-have |
+| 3 | [e.g., "Car engine V16 roar"] | Essentials | "F1 engine roar", "race car pass", "V16 engine" | YouTube (F1 official), SoundSnap | Must-have |
+| ... | ... | ... | ... | ... | ... |
+
+**Music Licensing Status**:
+- [ ] Track licensed/downloaded and in project folder
+- [ ] BPM marked in timeline (`{{$flow.state.music_bpm}} BPM`)
+- [ ] Drops marked at: `{{$flow.state.music_drops}}`
+- [ ] License allows platform use (check every target platform)
+
 ### 7. COLOR & FINISHING
 [From Sound & Finishing — include grade settings, finishing effects stack]
 
@@ -81,16 +95,43 @@ STEP 25: Check loop-ability (does end connect to start?)
 STEP 26: Export at platform settings
 ```
 
-### 10. ESTIMATED TIME
-| Phase | Time |
-|-------|------|
-| Setup & clip import | [X min] |
-| Speed ramping | [X min] |
-| Effects & transitions | [X min] |
-| Sound design | [X min] |
-| Color & finishing | [X min] |
-| Review & revisions | [X min] |
-| **Total** | **[X hours]** |
+### 10. TIME BUDGET (Skill-Level Adjusted)
+
+**Per-clip base time** (viral edits are clip-count-driven):
+
+| Skill Tier | Speed Ramp per Clip | Effect/Transition per Clip | Sound per Ramp | Color per Clip |
+|-----------|--------------------|-----------------------------|---------------|----------------|
+| **Beginner** | 25 min | 20 min | 15 min | 10 min |
+| **Intermediate** | 15 min | 12 min | 10 min | 6 min |
+| **Advanced** | 10 min | 8 min | 6 min | 4 min |
+| **Expert** | 6 min | 5 min | 4 min | 3 min |
+
+**Fixed** (independent of clips):
+
+| Phase | Beginner | Intermediate | Advanced | Expert |
+|-------|----------|--------------|----------|--------|
+| Setup & clip import | 30 min | 20 min | 15 min | 10 min |
+| Music/beat marking | 30 min | 20 min | 15 min | 10 min |
+| Review & revisions | 45 min | 30 min | 20 min | 15 min |
+
+**Math**:
+- Per-clip time = ramp + effects + sound + color (see rows above)
+- Multiply per-clip by `{{$flow.state.clip_count}}`
+- Add fixed phases
+- Round UP to nearest 0.5 hour
+
+**Output Format**:
+
+| Phase | Base (min) | Per-Clip × {{$flow.state.clip_count}} | Phase Total | Skill Adjusted | Hours |
+|-------|-----------|--------------------------------------|-------------|----------------|-------|
+| Setup & clip import | [X] | — | [X] | [X] | [X.X] |
+| Music/beat marking | [X] | — | [X] | [X] | [X.X] |
+| Speed ramping | — | [X] | [X] | [X] | [X.X] |
+| Effects & transitions | — | [X] | [X] | [X] | [X.X] |
+| Sound design | — | [X] | [X] | [X] | [X.X] |
+| Color & finishing | — | [X] | [X] | [X] | [X.X] |
+| Review & revisions | [X] | — | [X] | [X] | [X.X] |
+| **TOTAL** | | | | | **[X.X hours]** |
 
 ---
 
@@ -124,6 +165,10 @@ CRITIQUE REPORT:
 
 CREATIVE STRATEGY:
 {{$flow.state.creative_strategy}}
+
+CLIP COUNT: {{$flow.state.clip_count}} clips
+
+(Viral flow assumes Intermediate skill level. If the editor is Beginner, multiply all time figures by 1.5. If Advanced/Expert, multiply by 0.85 / 0.7 respectively.)
 
 Compile into the Final Viral Edit Package. Include all specs in full. Keep it action-oriented.
 ```

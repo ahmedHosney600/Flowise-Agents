@@ -31,20 +31,25 @@ START (Form) → Brief Builder → Human Approval → Creative Strategy
 
 ### Node Summary
 
-| # | Node Type | File | Purpose |
-|---|-----------|------|---------|
-| 1 | Start Node (Form) | `01_start_intake.md` | Collects all project info via structured form fields |
-| 2 | LLM Node | `02_brief_builder.md` | Compiles form answers into a formatted Project Brief |
-| 3 | Human Input Node | *(built-in Flowise node)* | User reviews and approves the brief |
-| 4 | LLM Node | `03_creative_strategy.md` | Determines editing style, music, references, visual mood |
-| 5 | LLM Node | `04_narrative_structure.md` | Designs the storytelling arc with hooks and open loops |
-| 6 | LLM Node | `05_retention_engineer.md` | Engineers pattern interrupts, drop-off fixes, micro-hooks |
-| 7 | LLM Node | `06_storyboard_builder.md` | Generates shot-by-shot storyboard with sound design |
-| 8 | LLM Node | `07_pacing_rhythm.md` | Creates beat map, energy curve, silence placement |
-| 9 | LLM Node | `08_self_critique.md` | Audits storyboard against all methodology rules |
-| 10 | Condition Node | *(built-in)* | Routes based on critique grade (A+ → continue, else → loop) |
-| 11 | LLM Node | `09_qa_final_package.md` | Final QA checklist + compiled deliverable package |
-| 12 | End Node | *(built-in)* | Returns the final output |
+This matches the 13 nodes in `Video_Pre_Planning_Pipeline_v3.json` (v3.1).
+
+| # | Flowise Type | ID in JSON | Doc File | Purpose |
+|---|--------------|-----------|----------|---------|
+| 1 | Start Node (Form) | `startAgentflow_0` | `01_start_intake.md` | Collects all project info via structured form fields |
+| 2 | LLM Node | `llmAgentflow_0` | `02_brief_builder.md` | Compiles form answers into a formatted Project Brief |
+| 3 | Human Input Node | `humanInputAgentflow_0` | *(built-in — see Step 7 below)* | User reviews and approves the brief |
+| 4 | LLM Node | `llmAgentflow_1` | `03_creative_strategy.md` | Determines editing style, music, references, visual mood |
+| 5 | LLM Node | `llmAgentflow_2` | `04_narrative_structure.md` | Designs the storytelling arc with hooks and open loops |
+| 6 | LLM Node | `llmAgentflow_3` | `05_retention_engineer.md` | Engineers pattern interrupts, drop-off fixes, micro-hooks |
+| 7 | LLM Node | `llmAgentflow_4` | `06_storyboard_builder.md` | Generates shot-by-shot storyboard with sound design |
+| 8 | LLM Node | `llmAgentflow_5` | `07_pacing_rhythm.md` | Creates beat map, energy curve, silence placement |
+| 9 | LLM Node | `llmAgentflow_6` | `08_self_critique.md` | Audits + fixes storyboard; emits `critique_grade` |
+| 10 | Condition Node | `conditionAgentflow_0` | *(built-in — see Step 5)* | Routes on grade: contains `"A"` → continue, else loop |
+| 11 | Loop Node | `loopAgentflow_0` | *(built-in — see Step 5)* | Re-enters Storyboard Builder, max 2 loops |
+| 12 | LLM Node | `llmAgentflow_7` | `09_qa_final_package.md` | Final QA checklist + compiled deliverable package |
+| 13 | Direct Reply Node | `directReplyAgentflow_0` | *(built-in — see Step 8)* | Returns `{{ $flow.state.final_package }}` to the user |
+
+> **Note on numbering**: The doc files are numbered `01`–`09` because they cover only the LLM phases. Built-in Flowise nodes (Human Input, Condition, Loop, Direct Reply) have no doc files — their setup is in Steps 5, 7, 8 below.
 
 ---
 
@@ -96,20 +101,40 @@ Each LLM Node reads from prior state variables and writes its output to its desi
 3. You can approve or provide corrections
 
 ### Step 5: Add Condition Node (Self-Critique Gate)
-1. After the Self-Critique node (Node 9), add a **Condition Node**
-2. Set condition: Check if `{{$flow.state.critique_grade}}` contains "A"
+1. After the Self-Critique node, add a **Condition Node**
+2. Set condition: `{{ $flow.state.critique_grade }}` **contains** `"A"`
+   - Because the enum is `[A+, A, B, C, D]`, "contains A" correctly matches `A` and `A+`
    - **True path** → connects to QA & Final Package node
-   - **False path** → connects back to Storyboard Builder node (Loop)
-3. Add a secondary condition: if `{{$flow.state.revision_count}}` >= 2, force continue to QA (prevents infinite loops)
+   - **False path** → connects to a **Loop Node**
+3. Add a **Loop Node** on the False path:
+   - `Loop Back To`: the Storyboard Builder LLM node
+   - `Max Loop Count`: `2` (hard safety cap prevents infinite loops)
 
-### Step 6: Add End Node
-1. After the QA & Final Package node, add an **End Node**
-2. Set it to return `{{$flow.state.final_package}}`
+### Step 6: Wire the Revision Counter
+In the **Self-Critique LLM node's Update State**, add an entry so each loop increments the counter:
+```json
+{ "key": "revision_count", "value": "{{ $flow.state.revision_count }}1" }
+```
+This produces `"0"` → `"01"` → `"011"` across passes — never exceeds `maxLoopCount = 2`, and the self-critique prompt reads it as a log of passes.
 
-### Step 7: Connect All Nodes
+### Step 7: Configure the Human Input Node (after Brief Builder)
+1. Drag a **Human Input** node between Brief Builder and Creative Strategy
+2. Description:
+   ```
+   Please review the generated Project Brief below. Click 'Proceed' to approve and continue to the Creative Strategy phase, or provide feedback for revisions.
+
+   {{ $flow.state.project_brief }}
+   ```
+3. Enable **Feedback** so users can leave comments before proceeding
+
+### Step 8: Add Direct Reply (End) Node
+1. After the QA & Final Package node, add a **Direct Reply** node
+2. Set the message to `{{ $flow.state.final_package }}`
+
+### Step 9: Connect All Nodes
 Follow the architecture diagram above to connect nodes with edges.
 
-### Step 8: Test
+### Step 10: Test
 1. Click **Run** or **Chat**
 2. Fill in the intake form
 3. Watch the pipeline process through all phases

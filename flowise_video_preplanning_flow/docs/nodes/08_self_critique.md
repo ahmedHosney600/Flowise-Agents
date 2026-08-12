@@ -1,9 +1,24 @@
 # Node 08: Self-Critique & Revision
 
-> **Node Type**: LLM Node
-> **Reads**: `{{$flow.state.project_brief}}`, `{{$flow.state.creative_strategy}}`, `{{$flow.state.storyboard}}`, `{{$flow.state.pacing_map}}`, `{{$flow.state.revision_count}}`
-> **Writes to**: `{{$flow.state.critique_report}}`, `{{$flow.state.critique_grade}}`, `{{$flow.state.storyboard}}` (revised), `{{$flow.state.revision_count}}` (incremented)
-> **Purpose**: Audits the storyboard against all methodology rules, flags issues, and auto-revises. If the grade is below A, the Condition Node loops back for another pass.
+> **Node Type**: LLM Node (with Structured Output)
+> **Reads**: `{{ $flow.state.project_brief }}`, `{{ $flow.state.creative_strategy }}`, `{{ $flow.state.storyboard }}`, `{{ $flow.state.pacing_map }}`
+> **Writes to**: `{{ $flow.state.critique_report }}`, `{{ $flow.state.critique_grade }}`, `{{ $flow.state.storyboard }}` (revised), `{{ $flow.state.revision_count }}` (appended pass marker)
+> **Purpose**: Audits the storyboard against all methodology rules, flags issues, and auto-revises. If the grade is below `A`, the Condition Node routes to the Loop node, which re-enters the Storyboard Builder. Hard safety cap: `maxLoopCount = 2`.
+>
+> **Structured Output** (required for the Condition node to read `critique_grade`):
+> - `critique_report: string` — the full report
+> - `critique_grade: enum` — one of `A+, A, B, C, D`
+> - `revised_storyboard: string` — the complete post-fix storyboard
+>
+> **Update State** entries:
+> ```json
+> [
+>   { "key": "critique_report",  "value": "{{ output.critique_report }}" },
+>   { "key": "critique_grade",   "value": "{{ output.critique_grade }}" },
+>   { "key": "storyboard",       "value": "{{ output.revised_storyboard }}" },
+>   { "key": "revision_count",   "value": "{{ $flow.state.revision_count }}1" }
+> ]
+> ```
 
 ---
 

@@ -34,11 +34,16 @@
 │  YouTube, docs,   │   │ ONLY                  │
 │  brand films)     │   │                       │
 │                   │   │ Alternative path —    │
-│ 10 nodes          │   │ NOT sequential with   │
+│ 15 nodes          │   │ NOT sequential with   │
 │ MANDATORY         │   │ Flow 1                │
 │                   │   │                       │
-│                   │   │ 7 nodes               │
+│                   │   │ 11 nodes              │
 │                   │   │ OPTIONAL              │
+│                   │   │                       │
+│ 📦 JSON:          │   │ 📦 JSON:              │
+│ Post_Production_  │   │ Speed_Ramp_Viral_     │
+│ Execution_Flow_   │   │ Flow_v1.json          │
+│ v1.json           │   │                       │
 └───────────────────┘   └───────────────────────┘
 ```
 
@@ -65,11 +70,12 @@
 
 ```
 new flows/
-├── README.md                              ← You are here
+├── README.md                                          ← You are here
 │
-├── 01_post_production_execution_flow/     ← FLOW 1 (mandatory for all projects)
-│   ├── README.md                          ← Setup guide
-│   ├── system_overview.md                 ← Full system documentation
+├── 01_post_production_execution_flow/                 ← FLOW 1 (mandatory for all projects)
+│   ├── README.md                                      ← Setup guide
+│   ├── system_overview.md                             ← Full system documentation
+│   ├── Post_Production_Execution_Flow_v1.json        ← ✨ Import into Flowise
 │   └── nodes/
 │       ├── 01_start_intake.md
 │       ├── 02_asset_organization.md
@@ -79,19 +85,22 @@ new flows/
 │       ├── 06_sound_design_architect.md
 │       ├── 07_audio_mixing_mastering.md
 │       ├── 08_color_finishing.md
-│       ├── 09_self_critique.md
+│       ├── 09_self_critique.md                       ← Audit only (no revisions)
+│       ├── 09a_revision_integrator.md                ← Revision Applier (lazy)
 │       └── 10_execution_package.md
 │
-└── 02_speed_ramp_viral_flow/              ← FLOW 2 (optional, viral content only)
+└── 02_speed_ramp_viral_flow/                          ← FLOW 2 (optional, viral content only)
     ├── README.md
     ├── system_overview.md
+    ├── Speed_Ramp_Viral_Flow_v1.json                  ← ✨ Import into Flowise
     └── nodes/
         ├── 01_start_intake.md
         ├── 02_clip_arrangement.md
         ├── 03_speed_ramp_designer.md
         ├── 04_viral_effects.md
         ├── 05_sound_finishing.md
-        ├── 06_self_critique.md
+        ├── 06_self_critique.md                       ← Audit only (no revisions)
+        ├── 06a_revision_integrator.md                ← Revision Applier (lazy)
         └── 07_viral_package.md
 ```
 

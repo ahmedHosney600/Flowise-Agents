@@ -132,6 +132,7 @@ SFX add drama, energy, and professional polish. They're the "spices" (Workshop 1
 | **Clock/Timer** | Countdown tension, urgency | 1-5s | -10 to -15dB |
 | **Heartbeat** | Human tension, anxiety, anticipation | 2-5s | -8 to -12dB |
 | **Paper/Texture** | Vintage transitions, organic feel | 0.5-2s | -10 to -15dB |
+| **Muffled/Underwater** | Reversed footage, dreams, underwater shots, slow-mo memory moments | Variable | Apply via low-pass + reverb (see Special Audio Treatments below) |
 
 **Rules** (from Level 8, Lesson 10.10):
 - Don't overuse SFX — NOT every cut needs a whoosh
@@ -219,8 +220,15 @@ Music is NOT a sound design layer — it's a separate element that interacts wit
 
 **Layer 4 — Hits & Impacts Map**:
 | Timestamp | Hit Type | Processing | Level | Dramatic Purpose |
-|-----------|----------|------------|-------|-----------------|
+|-----------|----------|------------|-------|------------------|
 | 0:XX | [type] | [reverb/EQ details] | [-XdB] | [why this moment] |
+
+**Special Audio Treatments** (Level 8 signature techniques):
+| Treatment | When to Use | Implementation | Notes |
+|-----------|-------------|----------------|-------|
+| **Muffled / Underwater** | Reversed footage, dream sequences, underwater shots, slow-motion memory moments | Low-pass filter (~400-800Hz cutoff) + parabolic/reverse reverb + optional slight pitch drop. Reduces high-end + adds "distance" so image and sound feel submerged. | Elgendy Rule: Never apply to dialogue. Use on music or ambient beds under the "submerged" moment. Pair with a hit on the reverse/return point. |
+| **Reversed Whoosh** | Reverse cuts, rewind gags, time-jumps | Take a whoosh SFX → reverse it in Audition/AE → trigger it at the point of reverse. | Signals time manipulation to the viewer's ear before their eye catches up. |
+| **Slow-Motion Impact-Only** | ANY slow-motion shot | Per Elgendy rule: NO continuous SFX over slow-mo. Place ONE impact at the start of the slow moment, then let it breathe (or use muffled treatment above). | From Level 8 Lesson 10.10: "I don't like putting sounds on slow-mo, I like putting an impact at the start." |
 
 **Music Integration Notes**:
 | Timestamp | Music State | SFX Interaction | Level Balance |

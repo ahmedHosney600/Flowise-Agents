@@ -128,19 +128,57 @@ STEP 25: Full playback review (headphones + speakers)
 STEP 26: Export final version
 ```
 
-### 12. ESTIMATED TIME BREAKDOWN
+### 12. TIME BUDGET (Skill-Level Adjusted)
 
-| Phase | Estimated Time | Notes |
-|-------|---------------|-------|
-| Setup & asset prep | X hours | [notes] |
-| First cuts | X hours | [notes] |
-| Effects & transitions | X hours | [notes] |
-| Motion graphics | X hours | [notes] |
-| Sound design | X hours | [notes] |
-| Audio mixing | X hours | [notes] |
-| Color & finishing | X hours | [notes] |
-| Review & revisions | X hours | [notes] |
-| **Total** | **X hours** | |
+**How to compute** (don't just guess — multiply):
+
+1. **Base per-shot time**: Sum across the storyboard. Each shot contributes based on the effects mapped to it:
+
+| Skill Tier | Simple Cuts | Standard FX (text/Lumetri/J-cuts) | Complex FX (masking/roto/track) | AE Composition |
+|-----------|------------|----------------------------------|--------------------------------|----------------|
+| **Beginner** | 5 min × N shots | 15 min × N shots | 45 min × N shots | 120 min × N comps |
+| **Intermediate** | 3 min × N shots | 10 min × N shots | 30 min × N shots | 90 min × N comps |
+| **Advanced** | 2 min × N shots | 5 min × N shots | 20 min × N shots | 60 min × N comps |
+| **Expert** | 1 min × N shots | 4 min × N shots | 12 min × N shots | 40 min × N comps |
+
+2. **Phase-level base time**: Add fixed overhead per phase (independent of shots):
+
+| Phase | Beginner | Intermediate | Advanced | Expert |
+|-------|----------|--------------|----------|--------|
+| Setup & asset prep | 1.5h | 1h | 45m | 30m |
+| First cuts assembly | 1h / min of footage | 45m / min of footage | 30m / min of footage | 20m / min of footage |
+| Effects & transitions | Sum above per-shot | Sum above per-shot | Sum above per-shot | Sum above per-shot |
+| Motion graphics | 1.5h | 1h | 45m | 30m |
+| Sound design (4-layer) | 2.5h | 2h | 1.5h | 1h |
+| Audio mixing | 1.5h | 1h | 45m | 30m |
+| Color grading | 1.5h | 1h | 45m | 30m |
+| Review & revisions | 1h | 45m | 30m | 20m |
+
+3. **Shot-count normalization**: Longer timelines multiply the per-shot tiers above.
+
+4. **Apply skill multiplier**: Multiply the total by:
+   - Beginner × 1.5
+   - Intermediate × 1.0
+   - Advanced × 0.85
+   - Expert × 0.7
+
+5. **Round UP to nearest 0.5 hour.** Editor time-budgeting is a commitment, not an estimate.
+
+**Output**:
+
+| Phase | Base (min) | Per-Shot Sum (min) | Phase Total (min) | Skill Adjusted (min) | Hours |
+|-------|-----------|--------------------|-------------------|----------------------|-------|
+| Setup & asset prep | [X] | — | [X] | [X] | [X.X] |
+| First cuts | [X] | [X] | [X] | [X] | [X.X] |
+| Effects & transitions | [X] | [X] | [X] | [X] | [X.X] |
+| Motion graphics | [X] | — | [X] | [X] | [X.X] |
+| Sound design | [X] | — | [X] | [X] | [X.X] |
+| Audio mixing | [X] | — | [X] | [X] | [X.X] |
+| Color grading | [X] | — | [X] | [X] | [X.X] |
+| Review & revisions | [X] | — | [X] | [X] | [X.X] |
+| **TOTAL** | | | | | **[X.X hours]** |
+
+**Sanity check**: If the total exceeds the deadline provided, flag it here with which phases need to be cut.
 
 ---
 
@@ -192,6 +230,9 @@ COLOR PLAN:
 
 CRITIQUE REPORT:
 {{$flow.state.critique_report}}
+
+EDITOR SKILL LEVEL: {{$flow.state.editor_skill_level}}
+(Use this for time-budget multiplication)
 
 Compile into the Final Post-Production Execution Package. Include all tables, maps, and specifications in full. The editor should be able to execute entirely from this document.
 ```

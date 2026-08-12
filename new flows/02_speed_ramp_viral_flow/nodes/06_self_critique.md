@@ -82,11 +82,16 @@ You are a viral content creative director reviewing a speed ramp edit plan. Your
 2. [strength]
 3. [strength]
 
-**Revised Elements**: [For each CRITICAL/WARNING, show the fix]
-
-**Post-Revision Grade**: [A or A+]
+**Revision Instructions for 06a** (only if grade is C or D):
+For each CRITICAL/WARNING issue, list:
+- Which state variable to modify (speed_ramp_plan, viral_effects_plan, or sound_finishing_plan)
+- The exact change to apply
 
 **Viral Potential Score**: [1-10, with reasoning — will this actually go viral?]
+
+IMPORTANT: End your response with exactly one line:
+GRADE: [grade]
+Where [grade] is one of: A+, A, B, C, D
 ```
 
 ---
@@ -113,7 +118,7 @@ CREATIVE STRATEGY:
 
 MUSIC BPM: {{$flow.state.music_bpm}}
 
-Perform your full self-critique. Be harsh. Fix all CRITICAL and WARNING issues.
+Perform your full self-critique. Be harsh. List all CRITICAL and WARNING issues with fixes so node 06a can apply them. You are auditing ONLY — do not output a revised plan in this node.
 ```
 
 ---
