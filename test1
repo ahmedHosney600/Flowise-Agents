@@ -1,0 +1,298 @@
+# ==============================================================================
+# FLOWISE AGENTFLOW V2 — COMPLETE SYSTEM TEST LOG & RESULTS
+# ==============================================================================
+
+# ==============================================================================
+# WORKFLOW 0: Video Pre-Planning Pipeline
+# JSON: 00_flowise_video_preplanning_flow/Video_Pre_Planning_Pipeline_v3.json
+# Test Scenario: Formula 1 60s Commercial ("Battle of Speed & Courage")
+# Status: TESTED & PASSED (Grade A+)
+# ==============================================================================
+
+### 1. START INTAKE FORM (Inputs Used)
+1. "What is the video about?": Formula 1 Racing - The Battle of Speed, Courage and Survival. A high-stakes commercial showcasing the extreme mental and physical warfare drivers face at 350 km/h.
+2. "Primary goal": [Option] Brand awareness
+3. "Core message (one sentence)": Formula 1 is not just driving; it is an uncompromising battle of human limits and precision where 20 drivers risk everything.
+4. "Content type": [Option] Commercial/Ad
+5. "Target duration": [Option] 60 seconds
+6. "Target audience description": Motorsport fans, adrenaline seekers, sports apparel consumers aged 18-35.
+7. "Primary platform": [Option] YouTube
+8. "Secondary platform (if any)": [Option] Instagram Reels
+9. "How will viewers discover this?": [Option] Social feed scroll
+10. "Will viewers watch with sound?": [Option] Mostly sound ON
+11. "Viewer mindset": [Option] Passively scrolling
+12. "Script / voiceover status": [Option] Voiceover will be recorded
+13. "Visual assets available": [Option] Both original + stock
+14. "Music status": [Option] Genre preference
+15. "Music details (if any)": Hans Zimmer hybrid orchestral track building from a tense ticking heartbeat clock into heavy brass braams and percussion.
+16. "Brand guidelines?": [Option] Yes - flexible guidelines
+17. "Target emotions (pick up to 3)": Adrenaline, awe, inspired
+18. "Desired energy / vibe": [Option] High energy / fast-paced
+19. "Reference videos (if any)": Nike "Never Settle" commercials, official F1 season launch trailers.
+20. "Styles to AVOID": Slow corporate slides, cheap meme SFX, low energy pacing.
+21. "Narrative structure preference": [Option] Linear story
+22. "Mandatory elements": 5 red starting lights sequence, tire smoke on apex lockup, F1 logo reveal.
+23. "Sensitive considerations": Focus on driver mastery and safety, do not glorify fatal crashes.
+24. "Quality tier": [Option] Premium / cinematic
+25. "Subtitles needed?": [Option] Yes - hardcoded
+26. "Standalone or series?": [Option] Standalone video
+27. "Series details (if applicable)": N/A
+
+---
+
+### 2. REAL EXECUTION RESULT (Workflow 0)
+
+FINAL QA CHECKLIST
+Checklist Item	Status	Notes
+A. HOOK & FIRST IMPRESSION		
+- First shot is visually compelling (not generic, not a logo, not black screen)	PASS	Extreme macro close-up of driver eyes in carbon-fiber helmet reflecting red lights.
+- First 3 seconds create curiosity, emotion, or surprise	PASS	5 red starting lights sequence instantly cuts to a violent tire smoke lockup.
+- First 5 seconds communicate enough to prevent scrolling/skipping	PASS	High-octane sensory overload establishes the high-stakes motorsport theme immediately.
+- Opening works with sound OFF	PASS	Visually arresting macro framing and intense facial expression convey extreme tension without audio.
+B. NARRATIVE INTEGRITY		
+- Core message is clearly communicated	PASS	Clearly establishes F1 as an uncompromising battle of human limits and precision.
+- Narrative arc is complete (setup, build, peak, resolve)	PASS	Follows a strict linear progression from grid tension to high-speed climax and clean logo resolution.
+- No confusing jumps in logic or timeline	PASS	Smooth chronological progression from pit lane preparation to race action.
+- Every shot contributes to the story (no filler)	PASS	Every frame focuses on human strain, aerodynamic engineering, or track velocity.
+- Ending is satisfying and memorable	PASS	Abrupt cut to silence and a stark, resonant sustain on the iconic F1 logo reveal.
+C. VISUAL QUALITY		
+- Shot types are varied (no 3+ consecutive same types)	PASS	Intentional alternation between extreme close-ups, onboard tracking, and wide atmospheric shots.
+- Camera angles are intentional (match emotional context)	PASS	Low-angle track shots and tight cockpit views amplify G-force pressure and speed.
+- Camera movements are motivated (not random)	PASS	Whip pans, rapid pans, and locked-off macro shots mirror vehicle velocity and human focus.
+- Color/mood direction is consistent throughout	PASS	Balanced cool blue-grey pit tones against warm, high-contrast golden hour track highlights.
+D. TRANSITIONS & CUTS		
+- Every transition is motivated by the story	PASS	Cuts match the rhythmic heartbeat clock and subsequent heavy percussion drops.
+- No cheap/dated transition effects	PASS	Clean hard cuts, whip pans, and matched action transitions used exclusively.
+- Cut on action used where applicable	PASS	Action cuts executed seamlessly on tire smoke bursts and vehicle direction changes.
+- Match cuts visually convincing	PASS	Visual continuity maintained across gear shifts and steering wheel inputs.
+- Cross-cutting serves narrative purpose	PASS	Alternates between internal biological strain (breathing/veins) and external vehicle combat.
+E. PACING & RHYTHM		
+- Cut frequency matches energy level	PASS	Escalates cleanly from a baseline tempo to 25-35 cuts per minute.
+- Quiet-loud pattern alternates properly	PASS	Balances low-audio atmospheric ticking clock tension with massive brass braam crescendos.
+- Peak section has fastest cuts	PASS	Act 3 utilizes rapid-fire beat-synced editing to maximize climax intensity.
+- Resolution returns to slower pacing	PASS	52s-60s slows down to a resonant, contemplative stillness for the brand reveal.
+- No dead zones longer than 15 seconds	PASS	Countermeasures and pattern interrupts successfully fill potential energy plateaus.
+- Music sync points mapped	PASS	Every major tempo shift, drop, and visual impact aligns precisely with the audio track.
+F. SOUND DESIGN		
+- Every shot has audio direction	PASS	Detailed tracking of voiceover, Hans Zimmer score cues, engine whines, and visceral SFX.
+- Music arc matches emotional arc	PASS	Ticking clock builds into heavy orchestral strings and explosive brass braams.
+- SFX are motivated	PASS	Visor clicks, screeching tires, and heartbeats directly accent visual actions.
+- Silence used strategically (at least once)	PASS	Final logo reveal drops all music into a stark, resonant sustain.
+- J-cuts/L-cuts placed for smooth transitions	PASS	High-pitched engine whines and audio cues bleed across scene boundaries.
+- Audio levels consistent	PASS	Professionally balanced mix prioritizing dialogue clarity and dynamic orchestral impact.
+G. RETENTION		
+- Pattern interrupts at correct intervals	PASS	Scheduled zoom punches, text flashes, and music shifts occur every 8 to 12 seconds.
+- Open loops planted and resolved	PASS	Hook establishes the question of control, resolved in the final athletic mastery climax.
+- Micro-hooks maintain forward momentum	PASS	Strategic voiceover teases and split-second visual flashes keep scrollers engaged.
+- Drop-off countermeasures in place	PASS	Addressed potential mid-build fatigue with high-contrast color shifts and telemetry graphics.
+- 3-second change rule satisfied	PASS	Visual composition or framing changes dynamically well within every 3-second window.
+H. PLATFORM OPTIMIZATION		
+- Aspect ratio noted	PASS	Optimized for 16:9 widescreen YouTube distribution (with 9:16 vertical crop adaptation).
+- Duration fits platform best practices	PASS	Exactly 60 seconds, ideal for YouTube short-form engagement and feed algorithms.
+- Pacing matches platform audience behavior	PASS	High-energy, fast-cut delivery aligns with the preferences of 18-35 adrenaline seekers.
+- Text overlays sized for platform	PASS	Bold, hardcoded typography scaled for high readability on mobile and desktop feeds.
+- CTA positioned correctly	PASS	Clean branding and logo reveal positioned at the natural conclusion of the narrative arc.
+- Subtitles/captions planned if needed	PASS	Hardcoded dynamic subtitles integrated throughout to support sound-on/silent viewing.
+
+FINAL VIDEO PRE-PLANNING PACKAGE
+1. PROJECT BRIEF:
+Working Title: The Ultimate Battle: Human Limits at 350 km/h
+Content Type: Commercial/Ad
+Target Duration: 60 seconds
+Core Message: Formula 1 is not just driving; it is an uncompromising battle of human limits and precision where 20 drivers risk everything.
+Primary Goal: Brand awareness
+Target Audience: Motorsport fans, adrenaline seekers, and sports apparel consumers aged 18 to 35.
+Primary Platform: YouTube (Secondary: Instagram Reels)
+Sound Assumption: Mostly sound ON
+Music Direction: Hans Zimmer hybrid orchestral track building from a tense ticking heartbeat clock into heavy brass braams and percussion.
+Mandatory Elements: 5 red starting lights sequence, tire smoke on apex lockup, F1 logo reveal.
+Quality Tier: Premium / cinematic
+
+2. CREATIVE STRATEGY:
+Editing Style: Commercial/Ad + Cinematic/Film hybrid (Relentless pacing, human-centric athletic grit, and motivational tonal weight).
+Audio Strategy: Low-tempo atmospheric ticking clock opening -> string staccato build -> explosive Hans Zimmer brass braam crescendo -> abrupt cut to a stark, resonant sustain on the final brand logo reveal.
+Visual Mood: High-contrast cinematic sports look marrying cool blue-grey pit lane tones with warm golden hour track lighting, crushed blacks, and vivid team liveries.
+Key Constraints: 25-35 cuts per minute, 1.5 to 3-second average shot duration, hardcoded dynamic typography, and rigorous adherence to the 3-second change rule.
+
+3. NARRATIVE STRUCTURE:
+Opening Hook (0:00 - 0:05): Extreme macro close-up of a driver's eyes inside a carbon-fiber helmet reflecting glowing red starting lights, cutting instantly to a violent tire smoke lockup.
+Act 1 — Setup (0:05 - 0:18): Sterile pit lane tension transforming into the roaring grid; low-tempo ticking heartbeat clock establishes baseline psychological pressure.
+Act 2 — Build (0:18 - 0:42): Rapid beat-synced cuts (25-35 CPM) highlighting G-force strain, telemetry graphic flashes, and a mid-point shift from ticking clock to driving percussion.
+Act 3 — Peak (0:42 - 0:52): Explosive climax featuring a car carving through an amber-lit high-speed corner, backed by thunderous brass braams and maximum visual velocity.
+Resolution (0:52 - 1:00): Abrupt cut to silence with a stark, resonant sustain, revealing the iconic F1 logo and final tagline.
+
+4. RETENTION MAP:
+Dead Zones Addressed: Mitigated energy plateaus at [0:09 - 0:13] and [0:24 - 0:28] using audio risers, whip pans, and sudden color contrast shifts.
+Pattern Interrupts: Scheduled every 8 to 12 seconds using zoom punches, text flashes, and sharp audio drops.
+Micro-Hooks: Integrated visual flashes, verbal questions ("Can they hold it?"), and J-cut audio engine whines to maintain forward momentum.
+Predicted Retention: 78% to 82% watch-through rate driven by high-density pacing and sensory stimulation.
+
+5. VISUAL STORYBOARD & 6. PACING MAP:
+Status: Approved with 25-35 cuts per minute and quiet-loud dynamic pacing.
+
+7. THUMBNAIL RECOMMENDATION:
+Recommended Shot: Shot 14 (The Act 3 apex cornering moment with amber tire smoke blooming against crushed blacks).
+
+
+# ==============================================================================
+# WORKFLOW 1: Post-Production Execution Flow
+# JSON: 01_post_production_execution_flow/Post_Production_Execution_Flow_v1.json
+# Test Scenario: Premiere Pro & After Effects Execution Blueprint
+# Status: TESTED & PASSED (Self-Critique Audited & Applied Fixes)
+# ==============================================================================
+
+### 1. START INTAKE FORM (Inputs Used)
+1. "Pre-Planning Package (paste from preplanning flow)": [Pasted Output from Workflow 0 above]
+2. "Software Suite": [Option] Premiere Pro + After Effects
+3. "Editor Skill Level": [Option] Advanced
+4. "Available Plugins": Boris FX Sapphire, Red Giant Universe, Mister Horse Transitions, Video Copilot Optical Flares
+5. "Footage Frame Rate": [Option] Mixed
+6. "Footage Resolution": [Option] 4K
+7. "Stock Footage Sources (optional)": Official F1 YouTube 4K race highlights, Artlist SFX, Storyblocks 4K overlays
+8. "AI Tools Available (optional)": ElevenLabs (Antony/Josh cinematic voiceover), Topaz Video AI
+9. "Deadline Pressure": [Option] Standard turnaround
+10. "Music Track BPM (optional)": 120
+11. "Music Track Link or Name (optional)": "Hans Zimmer Style - Heart of Speed (120-140 BPM)"
+
+---
+
+### 2. REAL EXECUTION RESULT (Workflow 1)
+
+FINAL POST-PRODUCTION EXECUTION PACKAGE
+1. PROJECT OVERVIEW
+Project Name: The Ultimate Battle: Human Limits at 350 km/h
+Content Type: Commercial / Ad
+Target Duration: 60 seconds
+Platform: YouTube (Secondary: Instagram Reels)
+Sound Assumption: Sound ON
+Editor's Quick Reference Card:
+Editing Style: Commercial/Ad + Cinematic/Film hybrid (relentless pacing, human-centric athletic grit, Average Shot Duration capped at 2.5 seconds).
+Audio Strategy: Low-tempo ticking clock -> string staccato build -> explosive Hans Zimmer brass braam crescendo -> sudden silence on logo reveal.
+Visual Mood: High-contrast cinematic sports look, cool blue-grey pit tones with warm golden hour track lighting.
+Software Suite & Required Plugins:
+Adobe Premiere Pro, Adobe After Effects, Boris FX Sapphire (S_Shake), Red Giant Universe (Glitch / Chromatic), Video Copilot Saber, Mister Horse Transitions.
+
+2. PRE-EDITING SETUP
+Folder Structure:
+F1_Ultimate_Battle_350kmh/
+├── 00_PROJECT_FILES/
+├── 01_FOOTAGE/ (A_CAM, B_CAM, STOCK, SCREEN_RECORDINGS)
+├── 02_AUDIO/ (VOICEOVER, MUSIC, SFX, COMMENTARY)
+├── 03_GRAPHICS/ (LOGOS, IMAGES, TEXTURES_OVERLAYS, FONTS)
+├── 04_AE_COMPOSITIONS/ (Transitions, Text_Animations, Logo_Animation, Composites)
+├── 05_COLOR/ (LUTs, Reference_Stills)
+├── 06_EXPORTS/
+└── 07_REFERENCES/
+
+Timeline Track Layout:
+V5: Text / Graphics / Overlays (Telemetry HUDs, F1 Logo)
+V4: Adjustment Layers (Color grading, film grain, light leaks)
+V3: B-Roll / Cutaways (Flash frames, secondary angles)
+V2: Secondary footage / Cross-cutting
+V1: Primary footage (Main storyboard assembly)
+A1: Voiceover / Dialogue
+A2: Music (Main track)
+A3: Ambiance / Atmosphere
+A4: SFX (Whooshes, risers, glitches)
+A5: Impacts / Hits (Braams, tire lockups)
+A6: Foley / Commentary
+A7: Commentary / Crowd sounds
+
+3. PHASE 1: FIRST CUTS & SYNC PLAN
+Ticking Clock Start (0:00) -> Shot 1 (Hard cut).
+String Staccato Hit (0:03) -> Shot 2 (Hard cut on beat).
+Industrial Impact (0:12) -> Shot 3 (L-cut).
+Engine Throttle Roar (0:24) -> Shot 4/5 (Match cut on action).
+Brass Braam Crescendo (0:45) -> Shot 6 (Hard cut on beat).
+Abrupt Total Silence (0:52) -> Shot 7 (Hard cut to black).
+
+4. PHASE 2: EFFECTS & TRANSITIONS
+Shot 1: Chromatic Aberration & Glow (VR Glow radius 30, RGB split 3px).
+Shot 2: Motion Tile Edge Extension + Shake (S_Shake amplitude 15).
+Shot 3: Film Grain & Desaturation (Tint + Add Grain amount 1.2).
+Shot 4: Heat Distortion (Turbulent Displace amount 45).
+Shot 5: Posterize Time (12fps) + Cyber HUD overlay.
+Shot 6: Golden Hour Glow & Light Leaks (CC Glow radius 45, screen blend 35%).
+Shot 7: Saber Plugin Light Lines (Core size 3, glow intensity 4).
+
+5. PHASE 3: MOTION GRAPHICS
+Typography: Main Titles (Montserrat Bold, 64pt, #FFFFFF), Subtitles (Inter Medium, 28pt), Callouts (Inter SemiBold, 22pt, #FF1801), Numbers (Bebas Neue Regular, 54pt).
+Shot 1: "5G G-FORCE" — Extended to 2.0s for mobile legibility.
+Shot 5: "6.4G LATERAL" — Data Counter with Slider Control.
+Shot 7: "FORMULA 1" — 3D Text Extrusion (Cinema 4D) with Saber glow outline.
+
+6. PHASE 4: 4-LAYER SOUND DESIGN & PHASE 5: AUDIO MIXING
+Layer 1 (Ambiance): Air hum & pit atmosphere (-24dB to -35dB).
+Layer 2 (Essentials): Starting lights sequence (-18dB), tire screech (-10dB), engine idle (-8dB), pass-by whoosh (-6dB).
+Layer 3 (SFX): Ticking clock, reverse risers, brass braams.
+Layer 4 (Hits): Sub-bass drops (-6dB), brass braam (-3dB), resonant sustain tail (-15dB).
+Master Chain Settings: Limiter ceiling at -3dB, Target Loudness at -14 LUFS.
+
+7. PHASE 6: COLOR & FINISHING
+Base Look: Kodak 2383 emulation LUT, Contrast +40, Highlights -15, Shadows -20, Saturation -15.
+Finish: Film Grain (Intensity 1.0), Vignette (-1.0), 3840x2160 4K ProRes 422 HQ / H.264 Web Master.
+
+8. QA AUDIT & TIME BUDGET
+Critique Grade: B -> Fixed text duration to 2.0s & Master Ceiling to -3dB.
+Total Estimated Time: 7.5 Hours (Advanced Editor).
+
+
+# ==============================================================================
+# WORKFLOW 2: Speed Ramp & Viral Edit Flow
+# JSON: new flows/02_speed_ramp_viral_flow/Speed_Ramp_Viral_Flow_v1.json
+# Test Scenario: 30s High-Energy Supercar Speed Ramp Reel (After Effects)
+# Status: READY TO RUN
+# ==============================================================================
+
+### 1. START INTAKE FORM (Labels Exactly as Displayed in Chat)
+
+[REQUIRED CORE FIELDS]
+1. "Pre-Planning Package (paste)" [Text Field]
+   -> VIRAL SHORT-FORM BRIEF:
+      - Concept: Supercar acceleration & drift speed-ramp montage
+      - Platform: Instagram Reels & TikTok (9:16 Vertical)
+      - Style: AE Graph editor curves, turbulent displace transitions, phonk bass drops
+
+2. "Clip Count" [Number Field]
+   -> 6
+
+3. "Clip Descriptions" [Text Field]
+   -> Clip 1: Driver putting helmet on & pressing Start Engine button (Close-up, 60fps, 4s).
+      Clip 2: Exhaust pipes firing flames on throttle rev (Macro shot, 120fps, 3s).
+      Clip 3: Car hard launch from standstill with smoking tires (Wide low angle, 60fps, 5s).
+      Clip 4: High-speed drift around sharp track corner apex (Tracking gimbal shot, 120fps, 6s).
+      Clip 5: FPV Drone chasing 1 meter above rear carbon spoiler (FPV shot, 60fps, 4s).
+      Clip 6: Car slides to stop in front of lens, driver stare down (Front 3/4 angle, 60fps, 4s).
+
+4. "Target Duration" [Dropdown Select]
+   -> Select: 30 seconds
+
+5. "Music Track BPM" [Number Field]
+   -> 135
+
+6. "Music Drop Timestamps (0:03, 0:08, ...)" [Text Field]
+   -> 0:02.80, 0:07.40, 0:13.20, 0:21.60, 0:28.00
+
+[OPTIONAL FIELDS WITH SELECTED OPTIONS]
+7. "Source Frame Rate" [Dropdown Select]
+   -> Select: Mixed
+
+8. "Trend Style (optional)" [Text Field]
+   -> Phonk speed ramp with optical flow, CC Force Motion Blur, turbulent displacement transitions.
+
+9. "Reference Videos (optional)" [Text Field]
+   -> Automotive reels by @carcinematic, Elgendy Level 11 Speed Ramp Workshop.
+
+10. "Available Plugins (optional)" [Text Field]
+    -> After Effects Native (Timewarp, Graph Editor, Turbulent Displace), Sapphire EdgeRays, Deep Glow.
+
+---
+
+### 2. VERIFICATION CHECKLIST (Expected Output)
+• Clip Arrangement: Optimal high-energy order matching clip energy to music drops.
+• Speed Ramp Blueprint:
+  - Exact speed curves: e.g., 100% normal -> 600% fast acceleration -> 25% slow-mo with Optical Flow.
+  - Graph Editor bezier handles (Ease Out 85%, Ease In 90%).
+• Viral VFX: Turbulent Displace keyframing (Size: 15, Amount: 35 across 4 frames), Directional Blur, Chromatic Aberration.
+• Sound Design & Finishing: Sub-drops aligned to 0:02.80, 0:07.40, 0:13.20; reverse whooshes before speed bursts.
+• Final Package: Ready-to-use After Effects timeline execution steps.

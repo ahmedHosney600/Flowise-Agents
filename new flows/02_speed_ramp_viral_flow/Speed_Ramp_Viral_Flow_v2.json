@@ -1,0 +1,2715 @@
+{
+    "description": "Speed Ramp & Viral Edit Pipeline \u2014 Flow 2 | Built from /new flows/02_speed_ramp_viral_flow docs. Audit-only self-critique with on-demand revision, loop-ability checks, and viral-specific grade parsing. | v1.1: fixed revision loop (Speed Ramp Designer + downstream read critique/revised_plans on iteration; Loop Count Guard force-exits to Final Viral Package at max revisions). | fixed structured-output parsing (explicit JSON format instruction added to Self-Critique prompt) | fixed outputs objects for Condition/HumanInput nodes (regression from generation) | v1.1.1: fixed Condition/HumanInput fan-in into Final Viral Package (duplicated node per Rule 1); fixed revision_count string-concat counter via structured output (Rule 2); fixed Loop Count Guard operation key equals->equal (matches actual compareOperationFunctions, not the stale embedded inputParams schema); added explicit JSON output-format instruction to Revision Applier prompt (same fix pattern already used on Self-Critique) after structured output returned empty {}. | v1.2: verified both Self-Critique and Revision Applier prompts no longer contain competing plain-text-JSON / \"end with GRADE:\" instructions (structured output schema is now the only format contract, removing the tool-call-vs-plain-text ambiguity that caused occasional empty {} parses). Rewrote Revision Applier to emit a concise row-per-issue fix list instead of full plan-section reproduction \u2014 Speed Ramp Designer only ever used revised_plans as guidance text on the regenerated pass, never spliced it in, so the full reproduction was wasted generation and also the thing most directly bloating Self-Critique's own re-audit input on loop 2 (revised_plans + critique_report are both read back into Self-Critique's user message via RE-AUDIT MODE). Residual risk: all LLM nodes call gemini-2.0-flash through a local OpenAI-compatible proxy (localhost:4981); Structured Output on Self-Critique/Revision Applier depends on that proxy reliably forcing tool-call/JSON output, which is outside what any prompt change can guarantee \u2014 see chat for mitigation options. | v1.3: disabled Flowise Structured Output on Self-Critique and Revision Applier entirely (the proxy-dependent tool-call path was the last remaining source of non-determinism). Both now write their raw text response to critique_raw_output / revision_raw_output via Update State, and carry a single strict OUTPUT CONTRACT instructing a fenced ```json block as the entire reply, with no competing format mechanism. A Custom Function node (added manually in the Flowise UI \u2014 see chat for exact JS + wiring) sits between each LLM node and its downstream Condition node: it regex-extracts the JSON, validates critique_grade against the allowed enum, and always returns a safe fallback (grade 'C', raw text as the report) instead of throwing, so a malformed model reply can no longer halt the run. revision_count is no longer requested from the model at all \u2014 the Custom Function node computes it directly from $flow.state.revision_count + 1, removing that arithmetic as a failure surface entirely. NOTE: edges still point llmAgentflow_4 -> conditionAgentflow_0 and llmAgentflow_5 -> conditionAgentflow_1 directly; rewire through the new Custom Function nodes once added.",
+    "usecases": [
+        "Viral Content",
+        "Speed Ramp",
+        "Short-Form Video",
+        "After Effects"
+    ],
+    "nodes": [
+        {
+            "id": "startAgentflow_0",
+            "type": "agentFlow",
+            "position": {
+                "x": 50,
+                "y": 50
+            },
+            "data": {
+                "id": "startAgentflow_0",
+                "label": "Start",
+                "version": 1.4,
+                "name": "startAgentflow",
+                "type": "Start",
+                "color": "#7EE787",
+                "hideInput": true,
+                "baseClasses": [
+                    "Start"
+                ],
+                "category": "Agent Flows",
+                "description": "Starting point of the agentflow",
+                "inputParams": [
+                    {
+                        "label": "Input Type",
+                        "name": "startInputType",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "Chat Input",
+                                "name": "chatInput",
+                                "description": "Start the conversation with chat input"
+                            },
+                            {
+                                "label": "Form Input",
+                                "name": "formInput",
+                                "description": "Start the workflow with form inputs"
+                            }
+                        ],
+                        "default": "formInput",
+                        "id": "startAgentflow_0-input-startInputType-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Form Title",
+                        "name": "formTitle",
+                        "type": "string",
+                        "placeholder": "Please Fill Out The Form",
+                        "show": {
+                            "startInputType": "formInput"
+                        },
+                        "id": "startAgentflow_0-input-formTitle-string",
+                        "display": true
+                    },
+                    {
+                        "label": "Form Description",
+                        "name": "formDescription",
+                        "type": "string",
+                        "placeholder": "Complete all fields below to continue",
+                        "show": {
+                            "startInputType": "formInput"
+                        },
+                        "id": "startAgentflow_0-input-formDescription-string",
+                        "display": true
+                    },
+                    {
+                        "label": "Form Input Types",
+                        "name": "formInputTypes",
+                        "description": "Specify the type of form input",
+                        "type": "array",
+                        "show": {
+                            "startInputType": "formInput"
+                        },
+                        "array": [
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "Text",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Textarea",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Options",
+                                        "name": "options"
+                                    },
+                                    {
+                                        "label": "Date",
+                                        "name": "date"
+                                    }
+                                ],
+                                "default": "string"
+                            },
+                            {
+                                "label": "Label",
+                                "name": "label",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Name",
+                                "name": "name",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Add Options",
+                                "name": "addOptions",
+                                "type": "array",
+                                "optional": true,
+                                "array": [
+                                    {
+                                        "label": "Option",
+                                        "name": "option",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        ],
+                        "id": "startAgentflow_0-input-formInputTypes-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Ephemeral Memory",
+                        "name": "startEphemeralMemory",
+                        "type": "boolean",
+                        "default": true,
+                        "optional": true,
+                        "id": "startAgentflow_0-input-startEphemeralMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Flow State",
+                        "name": "startState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "startAgentflow_0-input-startState-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Persist State",
+                        "name": "startPersistState",
+                        "type": "boolean",
+                        "default": true,
+                        "optional": true,
+                        "id": "startAgentflow_0-input-startPersistState-boolean",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "startInputType": "formInput",
+                    "formTitle": "Viral Speed Ramp Intake",
+                    "formDescription": "Provide clip info, music BPM, and drop timestamps to plan a viral speed ramp edit.",
+                    "formInputTypes": [
+                        {
+                            "type": "string",
+                            "label": "Pre-Planning Package (paste)",
+                            "name": "preplanningPackage"
+                        },
+                        {
+                            "type": "number",
+                            "label": "Clip Count",
+                            "name": "clipCount"
+                        },
+                        {
+                            "type": "string",
+                            "label": "Clip Descriptions",
+                            "name": "clipDescriptions"
+                        },
+                        {
+                            "type": "options",
+                            "label": "Target Duration",
+                            "name": "targetDuration",
+                            "addOptions": [
+                                {
+                                    "option": "15 seconds"
+                                },
+                                {
+                                    "option": "30 seconds"
+                                },
+                                {
+                                    "option": "45 seconds"
+                                },
+                                {
+                                    "option": "60 seconds"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "number",
+                            "label": "Music Track BPM",
+                            "name": "musicBPM"
+                        },
+                        {
+                            "type": "string",
+                            "label": "Music Drop Timestamps (0:03, 0:08, ...)",
+                            "name": "musicDrops"
+                        },
+                        {
+                            "type": "options",
+                            "label": "Source Frame Rate",
+                            "name": "sourceFrameRate",
+                            "addOptions": [
+                                {
+                                    "option": "24fps"
+                                },
+                                {
+                                    "option": "30fps"
+                                },
+                                {
+                                    "option": "60fps"
+                                },
+                                {
+                                    "option": "120fps"
+                                },
+                                {
+                                    "option": "Mixed"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "string",
+                            "label": "Trend Style (optional)",
+                            "name": "trendStyle"
+                        },
+                        {
+                            "type": "string",
+                            "label": "Reference Videos (optional)",
+                            "name": "referenceVideos"
+                        },
+                        {
+                            "type": "string",
+                            "label": "Available Plugins (optional)",
+                            "name": "availablePlugins"
+                        }
+                    ],
+                    "startEphemeralMemory": true,
+                    "startState": [
+                        {
+                            "key": "preplanning_package",
+                            "value": "{{ $form.preplanningPackage }}"
+                        },
+                        {
+                            "key": "project_brief",
+                            "value": ""
+                        },
+                        {
+                            "key": "storyboard",
+                            "value": ""
+                        },
+                        {
+                            "key": "pacing_map",
+                            "value": ""
+                        },
+                        {
+                            "key": "creative_strategy",
+                            "value": ""
+                        },
+                        {
+                            "key": "clip_count",
+                            "value": "{{ $form.clipCount }}"
+                        },
+                        {
+                            "key": "clip_descriptions",
+                            "value": "{{ $form.clipDescriptions }}"
+                        },
+                        {
+                            "key": "target_duration",
+                            "value": "{{ $form.targetDuration }}"
+                        },
+                        {
+                            "key": "music_bpm",
+                            "value": "{{ $form.musicBPM }}"
+                        },
+                        {
+                            "key": "music_drops",
+                            "value": "{{ $form.musicDrops }}"
+                        },
+                        {
+                            "key": "source_framerate",
+                            "value": "{{ $form.sourceFrameRate }}"
+                        },
+                        {
+                            "key": "trend_style",
+                            "value": "{{ $form.trendStyle }}"
+                        },
+                        {
+                            "key": "reference_videos",
+                            "value": "{{ $form.referenceVideos }}"
+                        },
+                        {
+                            "key": "available_plugins",
+                            "value": "{{ $form.availablePlugins }}"
+                        },
+                        {
+                            "key": "clip_arrangement",
+                            "value": ""
+                        },
+                        {
+                            "key": "speed_ramp_plan",
+                            "value": ""
+                        },
+                        {
+                            "key": "viral_effects_plan",
+                            "value": ""
+                        },
+                        {
+                            "key": "sound_finishing_plan",
+                            "value": ""
+                        },
+                        {
+                            "key": "critique_report",
+                            "value": ""
+                        },
+                        {
+                            "key": "critique_grade",
+                            "value": ""
+                        },
+                        {
+                            "key": "revised_plans",
+                            "value": ""
+                        },
+                        {
+                            "key": "revision_count",
+                            "value": "0"
+                        },
+                        {
+                            "key": "viral_package",
+                            "value": ""
+                        }
+                    ],
+                    "startPersistState": true
+                },
+                "outputAnchors": [
+                    {
+                        "id": "startAgentflow_0-output-startAgentflow",
+                        "label": "Start",
+                        "name": "startAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 249,
+            "height": 127,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 50,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_0",
+            "type": "agentFlow",
+            "position": {
+                "x": 380,
+                "y": 50
+            },
+            "data": {
+                "id": "llmAgentflow_0",
+                "label": "Clip Arrangement",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Clip Arrangement \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_0-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_0-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_0-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_0-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_0-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_0-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a viral video editor specializing in speed ramp and montage content. Your methodology is based on the Elgendy Academy viral editing workflow (Workshop Level 11).\n\nYour job is to plan the clip arrangement \u2014 which clips to use, in what order, and how they align with the music.\n\n---\n\n## CLIP ARRANGEMENT METHODOLOGY (from Elgendy Workshop Level 11)\n\n### STEP 1: CLIP ANALYSIS\n\nFor each source clip, evaluate:\n- **Action quality**: Does it have clear, dynamic motion? (essential for speed ramping)\n- **Speed ramp potential**: Is there a moment that looks great slow AND fast?\n- **Visual variety**: Does it differ enough from other clips? (avoid repetition)\n- **Peak moment**: What's the single best frame/moment in this clip?\n- **Frame rate assessment**: Can this clip handle slow-motion? (60fps+ = yes, 24fps = limited)\n\n### STEP 2: MUSIC-DRIVEN ARRANGEMENT\n\nIn viral edits, **the music is the master timeline**. Clips serve the music, not the other way around.\n\n**Beat mapping**:\n- Calculate beat interval from BPM: `60 / BPM = seconds per beat`\n- Example: 140 BPM = 0.43 seconds per beat\n- Mark every beat, every half-beat, and every bar (4 beats)\n- Map music structure: intro \u2192 build \u2192 drop \u2192 break \u2192 build \u2192 drop \u2192 outro\n\n**Clip placement rules**:\n1. **Drops/impacts = speed ramp peaks** \u2014 the fastest moment of the ramp lands on the drop\n2. **Builds = slow-motion sections** \u2014 tension builds with slowed footage\n3. **Breaks = breath moments** \u2014 simpler shots, less effects\n4. **Outros = resolution** \u2014 final slow-motion or freeze\n\n### STEP 3: ARRANGEMENT STRATEGY\n\n**The \"Energy Wave\" pattern** (from Workshop Level 11, Lesson 13.2):\n```\nClip 1: SLOW \u2192 FAST (ramp up into first drop)\nClip 2: FAST \u2192 SLOW (decelerate after drop, build tension)\nClip 3: SLOW \u2192 FAST (ramp into second drop)\nClip 4: FAST \u2192 SLOW \u2192 FAST (complex ramp for variety)\n... repeat with escalating energy\nFinal clip: FAST \u2192 FREEZE or SLOW (resolution)\n```\n\n**Variety rules**:\n- Never use two consecutive clips with similar motion direction\n- Alternate between wide and close-up shots\n- Vary clip subjects if possible (don't show the same thing twice)\n- Ensure color/brightness variety between adjacent clips\n\n### STEP 5: LOOP PLANNING (CRITICAL FOR VIRAL \u2014 from Level 11, Lesson 13.3)\n\nViral content MUST loop seamlessly. Replays = more watch time = more views.\n\n**The Loop Rule** (from workshop: \"\u0627\u0648\u0644 \u0641\u064a\u062f\u064a\u0648 \u062f\u0627 \u0647\u0648 \u0646\u0641\u0633\u0647 \u0627\u062e\u0631 \u0641\u064a\u062f\u064a\u0648\" \u2014 first video is the same as last video):\n1. **Place the first clip (or a visual match) as the last clip** \u2014 the ending should visually connect back to the beginning\n2. **Match energy levels**: The last frame's energy should match the first frame's energy\n3. **Match visual composition**: Similar framing, color, and motion direction between end and start\n4. **Speed ramp continuity**: If the first clip starts with slow-mo, the last clip should end in slow-mo at the same speed %\n5. **Music loop**: If possible, the music should also loop (or the cut should land on a beat that connects to the first beat)\n\n**Loop Connection Strategy** (include in your output):\n| Property | First Clip | Last Clip | Match Quality |\n|----------|-----------|-----------|---------------|\n| Shot type | [wide/close/etc.] | [should match] | \u2713/\u2717 |\n| Motion direction | [left-right/up-down] | [should match] | \u2713/\u2717 |\n| Speed at boundary | [X% speed] | [X% speed] | \u2713/\u2717 |\n| Color temperature | [warm/cool] | [should match] | \u2713/\u2717 |\n| Energy level | [low/medium/high] | [should match] | \u2713/\u2717 |\n\n### STEP 4: IN/OUT POINT SELECTION\n\nFor each clip, identify:\n- **In-point**: The frame where the clip starts (should be a \"calm before storm\" moment for slow-mo buildup)\n- **Peak frame**: The single most impactful frame (this is where the speed ramp peaks)\n- **Out-point**: Where to cut to the next clip (should be during fast motion for seamless transition)\n\n---\n\n## FORMAT YOUR OUTPUT AS:\n\n### CLIP ARRANGEMENT PLAN\n\n**Music Analysis**:\n| Property | Value |\n|----------|-------|\n| BPM | [X] |\n| Beat interval | [X.XXs] |\n| Drop timestamps | [list] |\n| Music structure | [intro/build/drop/break/etc. with timestamps] |\n\n**Beat Grid**:\n| Beat # | Timestamp | Music Event | Planned Action |\n|--------|-----------|-------------|---------------|\n| 1 | 0:00.00 | [event] | [what happens visually] |\n| 2 | 0:00.43 | [event] | [what happens visually] |\n\n**Clip Order & Placement**:\n| Position | Clip | Description | In-Point | Peak Frame | Out-Point | Speed Pattern | Music Sync |\n|----------|------|-------------|----------|------------|-----------|---------------|------------|\n| 1 | Clip [X] | [description] | [frame/time] | [frame/time] | [frame/time] | SLOW\u2192FAST | Ramps into drop at 0:XX |\n| 2 | Clip [X] | [description] | [frame/time] | [frame/time] | [frame/time] | FAST\u2192SLOW | Decelerates after drop |\n\n**Energy Flow Diagram**:\n```\n[ASCII visualization of energy/speed across the timeline]\n0:00 \u2581\u2582\u2583\u2585\u2587\u2588\u2587\u2585\u2583\u2582\u2581\u2582\u2583\u2585\u2587\u2588\u2587\u2585\u2583\u2581\n     slow  FAST  slow  FAST  end\n```\n\n**Clip Rejection List** (clips NOT used and why):\n| Clip | Reason Not Used |\n|------|----------------|\n| [X] | [no clear action / too similar to Clip Y / wrong frame rate / etc.] |\n\n**Estimated Total Duration**: [Xs] (should be within \u00b12s of target)"
+                        },
+                        {
+                            "role": "user",
+                            "content": "PRE-PLANNING PACKAGE:\n{{$flow.state.preplanning_package}}\n\nCLIP DESCRIPTIONS:\n{{$flow.state.clip_descriptions}}\n\nTARGET DURATION: {{$flow.state.target_duration}}\nMUSIC BPM: {{$flow.state.music_bpm}}\nMUSIC DROP TIMESTAMPS: {{$flow.state.music_drops}}\nSOURCE FRAME RATE: {{$flow.state.source_framerate}}\n\nCreate the complete Clip Arrangement Plan. Every clip must be placed with specific in/out points and speed patterns synced to the music."
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "clip_arrangement",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.9,
+                        "streaming": true,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_0-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 380,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_1",
+            "type": "agentFlow",
+            "position": {
+                "x": 710,
+                "y": 50
+            },
+            "data": {
+                "id": "llmAgentflow_1",
+                "label": "Speed Ramp Designer",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Speed Ramp Designer \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_1-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_1-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_1-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_1-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_1-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_1-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a speed ramp specialist. Your methodology is based on the Elgendy Academy viral speed ramp workflow (Workshop Level 11). You understand that speed ramping is NOT just \"make it slow then fast\" \u2014 it's a precise art of curve design, frame timing, and beat synchronization.\n\nYour job is to design the exact speed ramp parameters for every clip in the arrangement.\n\n---\n\n## SPEED RAMP METHODOLOGY (from Elgendy Workshop Level 11)\n\n### HOW SPEED RAMPING WORKS (Technical)\n\n### STEP 0: STABILIZE BEFORE RAMPING (from Level 11, Lesson 13.2)\n\n**CRITICAL WORKFLOW ORDER**: Stabilize footage BEFORE enabling Time Remapping.\n\nWarp Stabilizer and Time Remapping conflict in After Effects \u2014 they cannot coexist on the same layer. The correct workflow is:\n\n1. **Apply Warp Stabilizer** to each clip that needs stabilization\n   - Analyze footage \u2192 select tracking points on high-contrast features\n   - If stabilizer struggles, use \"Stop Tracking\" and reposition track points\n   - Method: Subspace Warp (default) or Position/Scale/Rotation\n2. **Pre-compose the stabilized clip**: Right-click \u2192 Pre-compose \u2192 \"Move all attributes into new composition\"\n3. **Enable Time Remapping on the pre-comp** (NOT on the original clip)\n4. Now design speed ramps on the pre-composed, stabilized layer\n\n**If the clip doesn't need stabilization**: Skip straight to Time Remapping on the original layer.\n\n**Workshop reference**: \"\u0647\u062a\u0644\u0627\u0642\u064a \u0639\u0627\u0645\u0644 stabilize... \u0641\u0641\u064a \u0642\u0635\u0647... \u0639\u0645\u0644 \u0644\u0647 break compose\" \u2014 stabilize first, then pre-compose, then time remap.\n\n### HOW SPEED RAMPING WORKS (After Stabilization)\n1. **Enable Time Remapping**: Right-click layer \u2192 Time \u2192 Enable Time Remapping\n2. **Open Speed Graph**: Graph Editor \u2192 switch from Value Graph to **Speed Graph**\n3. **Create keyframes** at speed change points\n4. **Shape the curve**: Pull handles to create smooth acceleration/deceleration\n\n**The Speed Graph** shows speed percentage over time:\n- **100% = normal speed** (1x)\n- **50% = half speed** (slow motion \u2014 requires 60fps+ source for smoothness)\n- **200% = double speed** (fast forward)\n- **400%+ = very fast** (blur effect, used at ramp peaks)\n\n### FRAME RATE CONSTRAINTS (CRITICAL from Level 11, Lesson 13.2)\n\n**Source frame rate determines slow-motion quality**:\n| Source FPS | Smoothest Slow % | Notes |\n|-----------|------------------|-------|\n| 24fps | 50% minimum (2x slow) | Anything slower looks choppy |\n| 30fps | 40% (2.5x slow) | Acceptable for moderate slow-mo |\n| 60fps | 20% (5x slow) | Good quality slow-mo |\n| 120fps | 10% (10x slow) | Cinematic slow-mo |\n\n**If source is 24fps**: Use frame blending (Pixel Motion Blur) or optical flow to compensate, but quality will be compromised. Plan speed ramps that don't go below 50%.\n\n### SPEED RAMP CURVE PATTERNS\n\n#### Pattern 1: Basic Ramp Up (slow \u2192 fast)\n```\nSpeed %\n400 |          \u2571\n300 |        \u2571\n200 |      \u2571\n100 |\u2500\u2500\u2500\u2500\u2571\n 50 |\u2500\u2500\u2571\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2192 Time\n    Entry   Ramp    Peak\n```\n- Use for: Building to an impact/drop\n- Curve type: Ease IN (start smooth, accelerate)\n\n#### Pattern 2: Basic Ramp Down (fast \u2192 slow)\n```\nSpeed %\n400 |\u2572\n300 |  \u2572\n200 |    \u2572\n100 |      \u2572\u2500\u2500\u2500\u2500\n 50 |        \u2572\u2500\u2500\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2192 Time\n    Peak   Ramp    Exit\n```\n- Use for: After an impact, dramatic reveal\n- Curve type: Ease OUT (decelerate smoothly)\n\n#### Pattern 3: V-Ramp (slow \u2192 fast \u2192 slow)\n```\nSpeed %\n400 |      \u2571\u2572\n300 |    \u2571    \u2572\n200 |  \u2571        \u2572\n100 |\u2571            \u2572\n 50 |                \u2572\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2192 Time\n    Entry  Peak  Exit\n```\n- Use for: The most common pattern. Speed peaks at the impact/drop, slow on either side.\n- The peak should land EXACTLY on the music beat/drop.\n\n#### Pattern 4: Complex Multi-Ramp\n```\nSpeed %\n400 |    \u2571\u2572     \u2571\u2572\n300 |  \u2571    \u2572 \u2571    \u2572\n200 |\u2571        \u2573      \u2572\n100 |                   \u2572\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2192 Time\n```\n- Use for: Action sequences with multiple beats, fast-paced sections\n- Multiple peaks aligned to multiple beat hits\n\n#### Pattern 5: Freeze \u2192 Ramp\n```\nSpeed %\n400 |            \u2571\n200 |          \u2571\n100 |        \u2571\n  0 |\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2571     (freeze = 0% speed)\n    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2192 Time\n    Freeze   Ramp\n```\n- Use for: Dramatic pause before explosion of speed\n- Time Remapping: create two keyframes at the same value = freeze\n\n### KEYFRAME EASING (CRITICAL from Level 11, Lesson 13.2)\n\n**Never use linear keyframes for speed ramps.** The speed change must be SMOOTH.\n\nIn the Graph Editor:\n1. Select all speed keyframes\n2. Press F9 (Easy Ease) as a starting point\n3. Then manually adjust handles:\n   - **Slow section \u2192 Fast section**: Pull the outgoing handle RIGHT (longer ease = slower acceleration)\n   - **Fast section \u2192 Slow section**: Pull the incoming handle LEFT (longer ease = smoother deceleration)\n\n**The ideal speed ramp curve** (from Level 11, Lesson 13.2):\n```\nThe curve should look like an \"S\" or a smooth wave, NEVER a sharp angle.\nSharp angles = jarring speed changes = amateur look.\nSmooth curves = cinematic speed transitions = professional.\n```\n\n### MOTION BLUR AT SPEED RAMP PEAKS (from Level 11, Lesson 13.5)\n\nWhen footage reaches high speed (200%+), it should have motion blur:\n- **Enable Motion Blur** on the layer (MB switch in AE)\n- **CC Force Motion Blur** on adjustment layer: Motion Blur Samples = 10-20\n- At low speed (slow-mo): motion blur should be ABSENT (crystal clear frames)\n- At high speed: motion blur should be HEAVY (streak effect)\n- The contrast between clear slow-mo and blurred fast-mo IS the speed ramp aesthetic\n\n### TRIM COMP TO WORK AREA (from Level 11, Lesson 13.2)\n\nAfter designing speed ramps, the composition will be longer than needed:\n1. Set work area (B for beginning, N for end) to cover only the used portion\n2. Right-click \u2192 Trim Comp to Work Area\n3. This cleans up the timeline\n\n---\n\n## FORMAT YOUR OUTPUT AS:\n\n### SPEED RAMP DESIGN PLAN\n\n**Frame Rate Assessment**:\n- Source FPS: [X]\n- Minimum safe slow-motion speed: [X%]\n- Slow-motion quality: [excellent / good / limited / poor]\n- Frame blending needed: [yes / no]\n\n**Per-Clip Speed Ramp Specification**:\n\nFor each clip:\n\n**CLIP [#]** | [description] | Duration: [Xs]\n\n| Parameter | Value |\n|-----------|-------|\n| **Ramp Pattern** | [V-Ramp / Ramp Up / Ramp Down / Multi-Ramp / Freeze\u2192Ramp] |\n| **Entry Speed** | [X% \u2014 e.g., 30% for slow-mo entry] |\n| **Peak Speed** | [X% \u2014 e.g., 400% for fast peak] |\n| **Exit Speed** | [X% \u2014 e.g., 50% for slow-mo exit] |\n| **Peak Timestamp** | [exact time in the music this peaks] |\n| **Peak Music Event** | [what beat/drop it syncs to] |\n| **Ramp Duration (in)** | [how many frames from slow to fast] |\n| **Ramp Duration (out)** | [how many frames from fast to slow] |\n| **Easing** | [describe curve shape \u2014 long ease in, short ease out, etc.] |\n| **Motion Blur** | [at what speed % to enable, samples count] |\n| **Frame Blending** | [if needed due to low fps source] |\n\n**Speed Ramp Curve Diagram** (ASCII for the full video):\n```\nClip 1         Clip 2         Clip 3         Clip 4\n\u2581\u2582\u2583\u2585\u2587\u2588\u2587\u2585\u2583  \u2581\u2582\u2583\u2585\u2587\u2588\u2588\u2588\u2588\u2588\u2585\u2583  \u2581\u2581\u2582\u2583\u2585\u2587\u2588\u2587\u2585\u2583\u2581  \u2581\u2582\u2583\u2585\u2587\u2588\u2585\u2583\u2581\u2581\n  \u2191 drop 1      \u2191 drop 2       \u2191 drop 3      \u2191 outro\n```\n\n**Beat-to-Speed Sync Table**:\n| Beat # | Timestamp | Music Event | Speed at This Point | Visual Action |\n|--------|-----------|-------------|-------------------|--------------|\n| 1 | 0:00.00 | Intro beat | 50% (slow) | [what's on screen] |\n| 4 | 0:01.72 | Build hit | 100% (normal) | [what's on screen] |\n| 8 | 0:03.43 | DROP | 400% (peak) | [what's on screen] |\n\n**Technical Notes**:\n- Composition frame rate: [should match delivery, e.g., 30fps]\n- Time Remapping keyframe count per clip: [X]\n- Estimated render time impact: [light / moderate / heavy]"
+                        },
+                        {
+                            "role": "user",
+                            "content": "CLIP ARRANGEMENT:\n{{$flow.state.clip_arrangement}}\n\nMUSIC BPM: {{$flow.state.music_bpm}}\nMUSIC DROP TIMESTAMPS: {{$flow.state.music_drops}}\nSOURCE FRAME RATE: {{$flow.state.source_framerate}}\n\nPACING MAP:\n{{$flow.state.pacing_map}}\n\nDesign the complete Speed Ramp Plan. Every clip must have exact speed percentages, peak timestamps synced to music, and curve descriptions.\n\n---\n\n## MODE: REVISION PASS\n\n**Revision Count**: {{ $flow.state.revision_count }}\n(If empty or \"0\", this is the initial design. If \"1\" or higher, this is a REVISION pass.)\n\n**If this is a revision pass**, you MUST apply the audit's specific fixes below. Do NOT re-design from scratch \u2014 start from these corrections and fill in only what's needed:\n\nAUDIT REPORT:\n{{ $flow.state.critique_report }}\n\nAPPLIED FIXES (from Revision Applier):\n{{ $flow.state.revised_plans }}\n\nIn revision mode: apply the audit's CRITICAL/WARNING fixes verbatim to your plan sections, keep everything else stable, and only re-derive content for sections explicitly flagged."
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "speed_ramp_plan",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.9,
+                        "streaming": true,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_1-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 710,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_2",
+            "type": "agentFlow",
+            "position": {
+                "x": 1040,
+                "y": 50
+            },
+            "data": {
+                "id": "llmAgentflow_2",
+                "label": "Viral Effects & Transitions",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Viral Effects & Transitions \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_2-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_2-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_2-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_2-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_2-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_2-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a viral effects specialist. Your methodology is based on the Elgendy Academy trendy effects workflow (Workshops Level 10 and 11). You understand that viral effects must be CURRENT, impactful, and serve the energy of the speed ramp.\n\nYour job is to design all effects and transitions for this viral edit, focusing on techniques that amplify the speed ramp's impact.\n\n---\n\n## VIRAL EFFECTS CATALOG (from Elgendy Workshops Level 10 & Level 11)\n\n### TRANSITION TECHNIQUES FOR SPEED RAMPS\n\n#### 1. Speed-Through Transition\n- **When**: Between two clips where the first ramps to peak speed\n- **How**: At maximum speed, footage becomes a motion blur \u2192 cut during the blur to next clip \u2192 next clip decelerates from blur\n- **Result**: Seamless speed-based transition with no visible cut\n\n#### 2. Whip Pan Transition\n- **How**: Last frames of outgoing clip = fast pan motion \u2192 first frames of incoming clip = matching pan direction\n- **Enhancement**: CC Force Motion Blur on both clips, matched direction\n- **Duration**: 4-8 frames overlap\n\n#### 3. Luma Matte Transition (from Level 10, Lesson 12.5)\n- **How**: Use a high-contrast element (bright window, dark silhouette) as transition mask\n- **Implementation**: Track Matte \u2192 Luma Matte \u2192 brightness drives the reveal\n- **Enhancement**: Add feather for softness\n\n#### 4. Flash + Scale Transition\n- **How**: Flash (exposure spike) + scale up on outgoing \u2192 hard cut \u2192 incoming at normal\n- **Duration**: 3-6 frames\n- **Great for**: Syncing with beat hits\n\n### EFFECT TECHNIQUES FOR VIRAL CONTENT\n\n#### 1. Turbulent Displace (from Level 11, Lesson 13.3)\n- **When**: At speed ramp peaks, impact moments\n- **Amount**: Keyframe from 0 \u2192 80-120 \u2192 0 (spike at peak)\n- **Size**: 200-400\n- **Complexity**: 1-2\n- **Duration**: 4-10 frames\n- **Purpose**: Creates an \"energy explosion\" distortion\n\n#### 2. Subject Isolation + Background Effects (from Level 11, Lesson 13.4)\n- **How**: \n  1. Rotoscope the main subject (Roto Brush in AE)\n  2. Duplicate layer: subject on top, background below\n  3. Apply effects ONLY to background (blur, color, particles)\n  4. Subject stays sharp while world distorts\n- **Variations**: \n  - Background zoom while subject stays still\n  - Background color shift while subject stays natural\n  - Particles/effects behind subject\n\n#### 3. Glow Enhancement (from Level 10, Lesson 12.6 & Level 11, Lesson 13.3)\n- **When**: At speed ramp peaks, on bright elements, energy moments\n- **Effect**: CC Glow or Deep Glow\n- **Settings**: \n  - Glow Threshold: 70-90%\n  - Glow Radius: 20-40\n  - Glow Intensity: 0.5-2.0\n- **Blend**: A and B blend or Screen mode\n- **Enhancement**: Combine with tint for color-themed glow\n\n#### 4. RGB Split / Chromatic Aberration\n- **When**: Speed ramp peaks, glitch moments\n- **How**: Duplicate layer 3x \u2192 shift each to R/G/B channel \u2192 offset position slightly\n- **Or**: Use plugin (e.g., Red Giant Chromatic Aberration)\n- **Amount**: 3-8px at peak, 0px at rest \u2192 keyframed\n\n#### 5. Particle Systems (from Level 11, Lesson 13.4)\n- **Types**:\n  - **Dust/debris**: Floating particles for atmosphere\n  - **Sparks**: At impact/collision moments\n  - **Smoke/fog**: For mystical/dramatic feel\n- **Implementation**: \n  - Use CC Particle World or Particular\n  - Or import pre-rendered particle footage (Screen blend mode)\n- **Key rule**: Particles should follow the speed ramp \u2014 slow when footage is slow, fast when footage is fast\n\n#### 6. Posterize Time (from Level 10, Lesson 12.5)\n- **When**: Style accent, retro moments, flash sequences\n- **Frame rate**: 8-12fps for choppy style effect\n- **Duration**: Short bursts (0.5-1 second) \u2014 never the whole video\n- **Enhancement**: Combine with grain + desaturation for vintage flash\n\n#### 7. Echo/Ghost Trail (from Level 10, Lesson 12.3)\n- **When**: During fast motion sections\n- **Effect**: CC Echo or manually offset duplicated layers\n- **Settings**: Number of echoes: 3-5, Echo operator: Add or Screen\n- **Purpose**: Creates a motion trail that emphasizes speed\n\n#### 8. Anchor Point Rotation (from Level 11, Lesson 13.4)\n- **Critical**: Before rotating any element, set anchor point to center\n- **Shortcut**: Ctrl+Alt+Home (centers anchor point on layer)\n- **Then**: Animate rotation from anchor point for clean spins\n- **Use for**: Rotating subjects, spinning transitions, dynamic rotations\n\n### MASKING FOR VIRAL EFFECTS (from Level 11, Lesson 13.4)\n\n#### Rotoscope Workflow\n1. Select Roto Brush tool\n2. Paint over subject on first frame\n3. Let AE propagate through clip\n4. Refine edges (hair, fine details)\n5. Freeze propagation at problem frames and re-paint\n6. Use \"Refine Edge\" for hair/fur\n\n#### Mask Animation for Reveals\n1. Create shape mask (pen tool)\n2. Keyframe mask path from hidden \u2192 revealed\n3. Add mask feather (10-30px)\n4. Apply mask expansion for timing control\n5. Use with linear wipe or radial wipe for controlled reveals\n\n### PRE-COMPOSE STRATEGY (from Level 11, Lesson 13.5)\n\n**Rule**: After building effects on a clip, pre-compose before adding finishing effects.\n\n**Why**: \n- Keeps timeline clean\n- Allows global effects (motion blur, color) to apply on top\n- Prevents effect stacking conflicts\n- Easier to adjust individual clips later\n\n**Workflow**: Select all layers for one clip \u2192 Right-click \u2192 Pre-compose \u2192 \"Move all attributes\" \u2192 Apply finishing effects on the pre-comp\n\n### FIRE / EXPLOSION OVERLAY TECHNIQUE (from Level 11, Lesson 13.3)\n\nPre-rendered fire/explosion footage composited into the scene:\n\n1. **Import fire footage** \u2192 create a \"VFX\" folder in the project\n2. **Place fire layer** above the clip (or between rotoscoped subject and background)\n3. **Blend mode: Screen** \u2014 this removes the black background, leaving only the fire\n4. **Position and scale** to match the scene (e.g., behind a car, under wheels, around subject)\n5. **Color match**: Apply Tint effect to shift fire color to match project palette\n6. **Timing**: Keyframe opacity or trim layer to sync fire appearance with speed ramp peaks\n\n**Combine with rotoscoping**: Place fire BETWEEN the rotoscoped subject (top) and background (bottom) \u2014 fire appears behind the subject naturally.\n\n**Sources**: Stock fire footage, free VFX packs, or CC Particle World fire presets.\n\n### CC PARTICLE WORLD \u2014 DETAILED PARAMETER GUIDE (from Level 11, Lesson 13.4)\n\nSpecific parameter settings from the workshop for different particle effects:\n\n| Parameter | Dust/Atmosphere | Sparks/Impact | Smoke/Fog |\n|-----------|----------------|--------------|-----------|\n| **Birth Rate** | 1-3 | 5-10 | 2-4 |\n| **Longevity** | 2-3s | 0.5-1s | 3-5s |\n| **Birth Size** | 0 (grow from nothing) | 0.2-0.5 | 0 |\n| **Death Size** | 0.5 (shrink at death) | 0 (shrink to nothing) | 1-2 (expand) |\n| **Velocity** | 0.1-0.3 (slow drift) | 2-5 (explosive) | 0.2-0.5 (drift) |\n| **Gravity** | -0.01 (slight float up) | 0.5-1.0 (fall) | -0.05 (rise) |\n| **Physics Animation** | Twirly | Explosive | Vortex |\n| **Evolution** | 100 (moderate animation) | 200+ (fast) | 50-80 (slow) |\n| **Particle Type** | Faded Sphere | Star/Line | Faded Sphere |\n| **Color** | White/gray | Match palette (workshop: red/white) | White/gray |\n\n**Critical rules**:\n- Particles should follow the speed ramp \u2014 time remap the particle comp along with the footage\n- Birth Size = 0 makes particles \"appear\" rather than \"pop\" into existence\n- Use Screen or Add blend mode for light-emitting particles\n\n### 3D CAMERA TRACKER + TEXT IN SPEED RAMP CONTEXT (from Level 11, Lesson 13.3)\n\nTracked text that sticks to real-world surfaces, even in speed-ramped footage:\n\n1. **Apply 3D Camera Tracker** to the ORIGINAL footage (before speed ramping)\n   - Effect \u2192 3D Camera Tracker\n   - Enable \"Detailed Analysis\" for better accuracy\n   - Wait for full analysis to complete\n2. **Select tracking points** on a flat surface (wall, ground, car panel)\n   - Look for points with high confidence (small error values)\n   - Select 3+ points on the same plane\n3. **Create Null and Camera**: Right-click selection \u2192 Create Null and Camera\n4. **Add text layer** \u2192 make it 3D \u2192 parent to the tracked Null\n5. **Adjust text**: Position, rotation, scale to fit the surface\n6. **Effects on tracked text**: Add glow, drop shadow for integration\n7. **Font selection**: Choose fonts that match the project mood (workshop: bold, impactful)\n\n**Speed Ramp Compatibility**: Run the tracker BEFORE enabling Time Remapping. If footage is already time-remapped, pre-compose it to normal speed, track, then re-apply speed ramp on the outer comp.\n\n---\n\n## FORMAT YOUR OUTPUT AS:\n\n### VIRAL EFFECTS & TRANSITIONS PLAN\n\n**Effects Style Direction**:\n- Primary effect technique: [the main recurring effect]\n- Transition style: [how clips connect]\n- Color accent: [dominant effect color, if any]\n- Overall density: [minimal / moderate / heavy / maximum]\n\n**Per-Clip Effects**:\n\nFor each clip:\n\n**CLIP [#]** | [description]\n\n| Timing | Effect | Implementation | Parameters | Sync Point |\n|--------|--------|----------------|------------|------------|\n| [when in clip] | [effect name] | [step-by-step] | [exact values] | [what music event] |\n\n**Per-Cut Transition**:\n| Cut # | From \u2192 To | Transition | Method | Duration | Sync |\n|-------|-----------|-----------|--------|----------|------|\n| 1\u21922 | Clip 1 \u2192 Clip 2 | [type] | [implementation] | [frames] | [beat #] |\n\n**Masking/Rotoscope Tasks**:\n| Clip # | What to Isolate | Method | Purpose | Complexity |\n|--------|----------------|--------|---------|------------|\n| X | [subject] | [roto/mask] | [what effect behind] | [easy/medium/hard] |\n\n**Particle/Overlay Plan**:\n| Clip # | Element | Source | Blend Mode | Opacity | Timing |\n|--------|---------|--------|-----------|---------|--------|\n| X | [particle type] | [pre-rendered/generated] | [screen/add] | [%] | [when] |\n\n**Pre-Compose Plan**:\n| Comp Name | Contents | Effects on Top | Notes |\n|-----------|----------|---------------|-------|\n| [name] | [which layers] | [finishing effects] | [tips] |"
+                        },
+                        {
+                            "role": "user",
+                            "content": "CLIP ARRANGEMENT:\n{{$flow.state.clip_arrangement}}\n\nSPEED RAMP PLAN:\n{{$flow.state.speed_ramp_plan}}\n\nCREATIVE STRATEGY:\n{{$flow.state.creative_strategy}}\n\nDesign the complete Viral Effects & Transitions Plan. Every clip needs effects specified. Every cut needs a transition. Sync everything to the speed ramp peaks.\n\n---\n\n## REVISION CONTEXT (if any)\n\nREVISION COUNT: {{ $flow.state.revision_count }}\nREVISED PLANS: {{ $flow.state.revised_plans }}\nAUDIT REPORT: {{ $flow.state.critique_report }}\n\nIf this is a revision pass (revision_count is not \"0\"), check the above for any fixes affecting YOUR section and apply them before producing output. Maintain beat-sync and loop-ability at all times."
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "viral_effects_plan",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.9,
+                        "streaming": true,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_2-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1040,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_3",
+            "type": "agentFlow",
+            "position": {
+                "x": 1370,
+                "y": 50
+            },
+            "data": {
+                "id": "llmAgentflow_3",
+                "label": "Sound Design & Finishing",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Sound Design & Finishing \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_3-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_3-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_3-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_3-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_3-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_3-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a viral content finishing specialist handling sound design, color, and final polish. For viral speed ramp content, these phases are combined because the content is short (15-60s) and sound design is more about IMPACT than layering.\n\n---\n\n## PART 1: SOUND DESIGN FOR VIRAL SPEED RAMPS\n\n### Sound Design Philosophy for Viral\nIn viral edits, sound serves ONE purpose: **amplifying the speed ramp's impact.** Every sound should make the speed change FEEL more dramatic.\n\n### SFX MAP (sync to speed ramp events)\n\n**Speed Ramp Sound Rules**:\n| Speed Event | Sound Type | Example |\n|------------|-----------|---------|\n| Slow-mo entry | Riser / build | Low rumble building in volume |\n| Ramp acceleration | Whoosh (pitch rising) | Ascending whoosh synced to speed increase |\n| Peak speed | Impact + bass drop | Deep boom + sub bass at the exact peak frame |\n| Deceleration | Reverse riser / decay | Sound fading/descending as speed drops |\n| Freeze frame | Silence or single tone | Complete silence for 0.5-1s, or sustained note |\n\n**Layer structure** (simplified for viral):\n| Track | Content | Level |\n|-------|---------|-------|\n| A1 | Music (the driver) | -6dB to -9dB |\n| A2 | Whooshes + Risers | -8dB to -12dB |\n| A3 | Impacts + Hits | -3dB to -6dB |\n| A4 | Ambiance (if any) | -20dB to -25dB |\n\n**Rules**:\n- Every speed ramp peak MUST have an impact sound\n- Risers build for 1-3 seconds before each drop\n- Whooshes match the speed direction (ascending = pitch up, descending = pitch down)\n- During slow-mo: reduce or remove SFX \u2014 let the music breathe\n- During freeze frames: SILENCE is powerful. Kill everything for 0.3-0.5s before the next impact.\n\n### Music Editing for Viral\n- If the music track is longer than the video, cut it to fit\n- Use risers/builds from the track's natural structure\n- If the music doesn't have a drop, add your own bass drop SFX\n- Music should be the LOUDEST element overall \u2014 viral is music-driven\n\n---\n\n## PART 2: COLOR GRADING FOR VIRAL\n\n### Color Strategy\nViral speed ramp content needs:\n- **High contrast**: Makes speed changes more visible\n- **Saturated colors**: Pops on small mobile screens\n- **Consistent grade**: Even though clips may be from different sources\n\n### Quick Grade Recipe (from Level 11, Lesson 13.5)\n1. **Lumetri Basic Correction**: Boost contrast (+20-30), slight saturation boost (+10-15)\n2. **Creative**: Add a LUT if using one, adjust intensity to 50-70%\n3. **Curves**: Lift shadows slightly (faded black look), crush highlights slightly\n4. **Color Wheels**: Push shadows warm (orange/amber), push highlights cool (slight blue) \u2014 creates cinematic contrast\n5. **Vignette**: -0.5 to -1.0 for edge darkening\n\n### Per-Clip Color Matching\nSince viral edits use clips from multiple sources:\n- Match exposure across all clips FIRST\n- Match color temperature SECOND\n- Apply creative grade on adjustment layer LAST\n\n---\n\n## PART 3: FINISHING\n\n### CC Force Motion Blur (from Level 11, Lesson 13.5)\n- **Critical finishing step**: Apply on an adjustment layer ABOVE everything\n- **Settings**: Motion Blur Samples = 10-15\n- **Why**: Unifies all clips with consistent motion blur, especially important for speed-ramped content\n- **Caveat**: Heavy on render time. Set to lower samples for preview.\n\n### Film Grain (from Level 11, Lesson 13.5)\n- **Effect**: Add Grain\n- **Intensity**: 1.0-1.5\n- **Size**: 1.5\n- **Application**: Adjustment layer on top\n- **Purpose**: Unifies mixed-source footage, adds texture\n\n### Vignette\n- **Effect**: CC Vignette\n- **Amount**: Subtle (-0.5 to -1.0)\n- **Purpose**: Draws eye to center on small screens\n\n### Sharpening\n- **Apply LAST after all effects**\n- **Amount**: 30-50 (moderate)\n- **Avoid**: Over-sharpening creates halo artifacts\n\n### Export for Viral Platforms\n| Setting | Value |\n|---------|-------|\n| Format | H.264 |\n| Resolution | 1080x1920 (9:16) or 1920x1080 (16:9) |\n| Frame Rate | 30fps (match delivery platform) |\n| Bitrate | 15-25 Mbps |\n| Audio | AAC, 48kHz, 320kbps |\n\n---\n\n## FORMAT YOUR OUTPUT AS:\n\n### SOUND DESIGN & FINISHING PLAN\n\n**SOUND DESIGN**:\n\n**SFX Placement Table**:\n| Timestamp | Speed Event | SFX Type | Specific Sound | Duration | Level | Sync |\n|-----------|------------|----------|----------------|----------|-------|------|\n| 0:XX | [event] | [type] | [description] | [Xs] | [-XdB] | [beat #] |\n\n**Music Editing Notes**:\n| Action | Timestamp | Description |\n|--------|-----------|-------------|\n| [cut/extend/add drop] | 0:XX | [what to do to the music] |\n\n**Silence Moments**:\n| Timestamp | Duration | Purpose |\n|-----------|----------|---------|\n| 0:XX | [Xs] | [dramatic reason] |\n\n---\n\n**COLOR GRADING**:\n\n**Base Grade** (all clips):\n| Setting | Value |\n|---------|-------|\n| Contrast | [+X] |\n| Saturation | [+X] |\n| Temperature | [value] |\n| Shadows Color | [warm/cool + hex] |\n| Highlights Color | [warm/cool + hex] |\n\n**Per-Clip Adjustments** (if needed for matching):\n| Clip # | Exposure Adj | Temp Adj | Notes |\n|--------|-------------|----------|-------|\n| X | [\u00b1X] | [\u00b1X] | [why] |\n\n---\n\n**FINISHING CHECKLIST**:\n\n| Layer | Effect | Settings | Order |\n|-------|--------|----------|-------|\n| Adj Layer (top) | CC Force Motion Blur | Samples: X | 1st |\n| Adj Layer (top) | Add Grain | Intensity: X | 2nd |\n| Adj Layer (top) | CC Vignette | Amount: X | 3rd |\n| Adj Layer (top) | Sharpen | Amount: X | Last |\n\n**Export Settings**:\n| Setting | Value |\n|---------|-------|\n| Format | [format] |\n| Resolution | [res] |\n| Frame Rate | [fps] |\n| Bitrate | [Mbps] |"
+                        },
+                        {
+                            "role": "user",
+                            "content": "CLIP ARRANGEMENT:\n{{$flow.state.clip_arrangement}}\n\nSPEED RAMP PLAN:\n{{$flow.state.speed_ramp_plan}}\n\nVIRAL EFFECTS PLAN:\n{{$flow.state.viral_effects_plan}}\n\nCREATIVE STRATEGY:\n{{$flow.state.creative_strategy}}\n\nMUSIC BPM: {{$flow.state.music_bpm}}\n\nCreate the combined Sound Design & Finishing Plan. Every speed ramp peak must have sound. Color must be specified. Finishing effects must be in order.\n\n---\n\n## REVISION CONTEXT (if any)\n\nREVISION COUNT: {{ $flow.state.revision_count }}\nREVISED PLANS: {{ $flow.state.revised_plans }}\nAUDIT REPORT: {{ $flow.state.critique_report }}\n\nIf this is a revision pass (revision_count is not \"0\"), check the above for any fixes affecting YOUR section and apply them before producing output. Maintain beat-sync and loop-ability at all times."
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "sound_finishing_plan",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.9,
+                        "streaming": true,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_3-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1370,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_4",
+            "type": "agentFlow",
+            "position": {
+                "x": 1700,
+                "y": 50
+            },
+            "data": {
+                "id": "llmAgentflow_4",
+                "label": "Self-Critique (Audit)",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Self-Critique (Audit) \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_4-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_4-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_4-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_4-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_4-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_4-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a viral content creative director reviewing a speed ramp edit plan. Your standards are based on the Elgendy Academy viral editing methodology. Audit the ENTIRE plan and grade it honestly.\n\n---\n\n## VIRAL-SPECIFIC AUDIT CRITERIA\n\n### A. BEAT SYNC AUDIT\n- Is EVERY speed ramp peak synced to a music beat/drop?\n- Are transitions timed to beats?\n- Does the beat grid account for ALL significant music events?\n- Is the BPM calculation correct?\n\n### B. SPEED RAMP QUALITY AUDIT\n- Are speed ramp curves smooth (no sharp linear changes)?\n- Is the minimum slow-motion speed within frame rate limits?\n- Are ramp durations long enough for smooth perception?\n- Is motion blur planned for fast sections?\n- Does the speed pattern vary throughout? (Not the same ramp repeated)\n- Is there at least ONE freeze frame moment for dramatic impact?\n\n### C. EFFECTS APPROPRIATENESS AUDIT\n- Are effects synced to speed ramp peaks?\n- Is turbulent displace used at impact moments (not randomly)?\n- Are there too many effect types? (Viral content should feel cohesive)\n- Are rotoscope/mask tasks realistic in scope?\n- Is pre-composing planned before finishing effects?\n- Are particle effects motivated (not just decoration)?\n\n### D. CLIP ARRANGEMENT AUDIT\n- Do adjacent clips have visual variety (different motion, angle, subject)?\n- Is the energy pattern escalating toward the end?\n- Are there enough clips for the target duration?\n- Is the hook strong? (First clip should be the most eye-catching)\n- Does the ending resolve (slow-mo, freeze, or loop)?\n\n### E. SOUND FOR VIRAL AUDIT\n- Does every speed ramp peak have an impact sound?\n- Are risers building before each drop?\n- Is there at least one silence moment for contrast?\n- Is the music the dominant audio element?\n- Are SFX levels specified in dB?\n\n### F. FINISHING AUDIT\n- Is CC Force Motion Blur applied as a finishing step?\n- Is film grain applied for unity?\n- Is color consistent across all clips?\n- Are export settings correct for the target platform?\n- Is the aspect ratio correct (9:16 for shorts, 16:9 for YouTube)?\n\n### G. LOOP-ABILITY CHECK (CRITICAL FOR VIRAL)\n- Does the ending connect back to the beginning? (Loop = more replays = more views)\n- Can a viewer watch this on repeat without a jarring restart?\n- Is the last frame's energy level similar to the first frame?\n\n---\n\n## REPORT CONTENT (this is what goes INSIDE critique_report below):\n\n### VIRAL EDIT SELF-CRITIQUE REPORT\n\n**Overall Grade**: [A+ / A / B / C / D] \u2014 [justification]\n\n**Issues Found**:\n| # | Category | Severity | Issue | Section | Fix |\n|---|----------|----------|-------|---------|-----|\n| 1 | [category] | CRITICAL / WARNING / MINOR | [description] | [which part] | [fix] |\n\n**Strengths**:\n1. [strength]\n2. [strength]\n3. [strength]\n\n**Revision Instructions for 06a** (only if grade is C or D):\nFor each CRITICAL/WARNING issue, list:\n- Which state variable to modify (speed_ramp_plan, viral_effects_plan, or sound_finishing_plan)\n- The exact change to apply\n\n**Viral Potential Score**: [1-10, with reasoning \u2014 will this actually go viral?]\n\n---\n\n## OUTPUT CONTRACT \u2014 READ CAREFULLY, THIS OVERRIDES ANY OTHER FORMAT HABIT\n\nYour ENTIRE reply must be exactly one fenced code block and nothing else. No sentence before it, no sentence after it, no second code block, no tool/function call \u2014 just this:\n\n```json\n{\"critique_report\": \"<the full VIRAL EDIT SELF-CRITIQUE REPORT above as one JSON string \u2014 use \\n for line breaks and escape any double quotes>\", \"critique_grade\": \"<exactly one of: A+, A, B, C, D \u2014 nothing else in this field>\"}\n```\n\nIf you find yourself about to write anything outside that single fenced block, stop and put it inside the critique_report string instead."
+                        },
+                        {
+                            "role": "user",
+                            "content": "Audit this complete viral speed ramp edit plan:\n\nCLIP ARRANGEMENT:\n{{$flow.state.clip_arrangement}}\n\nSPEED RAMP PLAN:\n{{$flow.state.speed_ramp_plan}}\n\nVIRAL EFFECTS PLAN:\n{{$flow.state.viral_effects_plan}}\n\nSOUND & FINISHING PLAN:\n{{$flow.state.sound_finishing_plan}}\n\nCREATIVE STRATEGY:\n{{$flow.state.creative_strategy}}\n\nMUSIC BPM: {{$flow.state.music_bpm}}\n\nPerform your full self-critique. Be harsh. List all CRITICAL and WARNING issues with fixes so node 06a can apply them. You are auditing ONLY.\n\n---\n\n## RE-AUDIT MODE (if applicable)\n\nREVISION COUNT: {{ $flow.state.revision_count }}\nREVISED PLANS (already applied): {{ $flow.state.revised_plans }}\n\nIf this is a re-audit (revision_count not \"0\"), check whether previously-flagged CRITICAL/WARNING issues are now resolved. If unresolved, downgrade further. If loop-ability or beat-sync was broken by a revision, flag it as CRITICAL."
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "critique_raw_output",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.3,
+                        "streaming": false,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_4-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1700,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_5",
+            "type": "agentFlow",
+            "position": {
+                "x": 2030,
+                "y": 350
+            },
+            "data": {
+                "id": "llmAgentflow_5",
+                "label": "Revision Applier",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Revision Applier \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_5-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_5-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_5-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_5-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_5-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_5-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a revision specialist for viral speed ramp content. Your job is to take a Self-Critique report and the current plan sections, then produce a concise, itemized FIX LIST for every issue flagged as CRITICAL or WARNING \u2014 the exact parameter change needed, not a rewrite of the plans. The next node (Speed Ramp Designer) regenerates the full plan itself and only uses your fix list as guidance, so reproducing full sections here is wasted generation and the most likely reason this node occasionally returns empty.\n\n---\n\n## REVISION METHODOLOGY\n\n### STEP 1: PARSE CRITIQUE REPORT\n\nFrom the critique report, extract:\n- Every issue marked as **CRITICAL** or **WARNING**\n- The **Category** column (Beat Sync, Speed Ramp Quality, Effects, etc.)\n- The **Fix** column (what needs to change)\n\nIgnore issues marked as MINOR \u2014 they are informational only.\n\n### STEP 2: MAP ISSUES TO PLANS\n\nGroup issues by which plan they affect:\n| Plan Variable | Categories | Issues to Fix |\n|---------------|-----------|---------------|\n| speed_ramp_plan | Beat Sync, Speed Ramp Quality | [list] |\n| viral_effects_plan | Effects Appropriateness | [list] |\n| sound_finishing_plan | Sound, Finishing, Color | [list] |\n\n### STEP 3: WRITE THE EXACT FIX FOR EACH ISSUE\n\nFor each CRITICAL/WARNING issue:\n1. Identify the specific clip/section it affects\n2. Identify exactly which parameter(s) need to change (e.g. Peak Speed, Peak Timestamp, an SFX level, a transition type)\n3. State the OLD value -> NEW value, precise enough that another editor could apply it without guessing\n4. Do NOT reprint the full plan section or any unaffected content \u2014 only the field(s) that change. This output is read as a fix list by the next design pass, never inserted verbatim, so bulk here is wasted effort.\n\n### STEP 4: VIRAL-SPECIFIC REVISION CHECKS\n\nAfter generating revisions, verify:\n- All speed ramp peaks still sync to music beats after revision\n- Loop-ability is maintained (end connects to start)\n- Effect changes don't break pre-compose strategy\n- Sound changes maintain the music-first hierarchy\n\n---\n\n## FIX LIST CONTENT (this is what goes INSIDE revised_plans below):\n\n### REVISION FIX LIST (VIRAL)\n\n**Revision Summary**:\n| Plan | # Critical | # Warning | Status |\n|------|-----------|-----------|--------|\n| speed_ramp_plan | X | X | REVISED / NO CHANGES |\n| viral_effects_plan | X | X | REVISED / NO CHANGES |\n| sound_finishing_plan | X | X | REVISED / NO CHANGES |\n\n---\n\n**Fixes** (one row per issue only \u2014 never a full section):\n| # | Plan | Target (clip / section) | Old -> New |\n|---|------|--------------------------|------------|\n| 1 | speed_ramp_plan | Clip 3 | Peak Speed 250% -> 400%; Peak Timestamp -> 0:03.43 to land on the drop |\n\nIf a plan has no CRITICAL/WARNING issues, write \"[NO CHANGES]\" for that plan instead of listing rows.\n\n---\n\n**Revision Confidence**: [High / Medium / Low] \u2014 [one-sentence reason]\n\nKEEP THIS SHORT. This is a fix list, not a rewrite of the plans \u2014 every row should be one line. Total output should rarely exceed ~30 lines even when every plan has issues.\n\n---\n\n## OUTPUT CONTRACT \u2014 READ CAREFULLY, THIS OVERRIDES ANY OTHER FORMAT HABIT\n\nYour ENTIRE reply must be exactly one fenced code block and nothing else. No sentence before it, no sentence after it, no second code block, no tool/function call \u2014 just this:\n\n```json\n{\"revised_plans\": \"<the full REVISION FIX LIST above as one JSON string \u2014 use \\n for line breaks and escape any double quotes>\"}\n```\n\nNote: you do NOT need to output a revision count \u2014 that is now computed separately. Only output the revised_plans key."
+                        },
+                        {
+                            "role": "user",
+                            "content": "CRITIQUE REPORT:\n{{$flow.state.critique_report}}\n\nCRITIQUE GRADE:\n{{$flow.state.critique_grade}}\n\nREVISION COUNT (current count before this revision; treat empty as 0):\n{{$flow.state.revision_count}}\n\nCURRENT SPEED RAMP PLAN:\n{{$flow.state.speed_ramp_plan}}\n\nCURRENT VIRAL EFFECTS PLAN:\n{{$flow.state.viral_effects_plan}}\n\nCURRENT SOUND & FINISHING PLAN:\n{{$flow.state.sound_finishing_plan}}\n\nParse the critique report. For every CRITICAL and WARNING issue, output one fix-list row with the exact old -> new value. Do not reproduce full plan sections. Output in the specified format."
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "revision_raw_output",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.3,
+                        "streaming": false,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_5-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2030,
+                "y": 350
+            },
+            "dragging": false
+        },
+        {
+            "id": "conditionAgentflow_0",
+            "type": "agentFlow",
+            "position": {
+                "x": 2030,
+                "y": 50
+            },
+            "data": {
+                "id": "conditionAgentflow_0",
+                "label": "Grade Check",
+                "version": 1,
+                "name": "conditionAgentflow",
+                "type": "Condition",
+                "color": "#BA68C8",
+                "baseClasses": [
+                    "Condition"
+                ],
+                "category": "Agent Flows",
+                "description": "Grade Check",
+                "inputParams": [
+                    {
+                        "label": "Conditions",
+                        "name": "conditions",
+                        "type": "array",
+                        "array": [
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    }
+                                ],
+                                "default": "string"
+                            },
+                            {
+                                "label": "Value 1",
+                                "name": "value1",
+                                "type": "string",
+                                "acceptVariable": true
+                            },
+                            {
+                                "label": "Operation",
+                                "name": "operation",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "Contains",
+                                        "name": "contains"
+                                    },
+                                    {
+                                        "label": "Equals",
+                                        "name": "equals"
+                                    },
+                                    {
+                                        "label": "Not Equals",
+                                        "name": "notEquals"
+                                    },
+                                    {
+                                        "label": "Greater Than",
+                                        "name": "greaterThan"
+                                    },
+                                    {
+                                        "label": "Less Than",
+                                        "name": "lessThan"
+                                    }
+                                ],
+                                "default": "contains"
+                            },
+                            {
+                                "label": "Value 2",
+                                "name": "value2",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "conditionAgentflow_0-input-conditions-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "conditions": [
+                        {
+                            "type": "string",
+                            "value1": "{{ $flow.state.critique_grade }}",
+                            "operation": "contains",
+                            "value2": "A"
+                        }
+                    ]
+                },
+                "outputAnchors": [
+                    {
+                        "id": "conditionAgentflow_0-output-0",
+                        "label": "Grade A+ or A",
+                        "name": "conditionAgentflow"
+                    },
+                    {
+                        "id": "conditionAgentflow_0-output-1",
+                        "label": "Grade B/C/D",
+                        "name": "conditionAgentflow"
+                    }
+                ],
+                "outputs": {
+                    "conditionAgentflow": ""
+                },
+                "selected": false
+            },
+            "width": 230,
+            "height": 100,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2030,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "loopAgentflow_0",
+            "type": "agentFlow",
+            "position": {
+                "x": 2030,
+                "y": 600
+            },
+            "data": {
+                "id": "loopAgentflow_0",
+                "label": "Loop to Speed Ramp Designer",
+                "version": 1.2,
+                "name": "loopAgentflow",
+                "type": "Loop",
+                "color": "#FFA07A",
+                "hideOutput": true,
+                "baseClasses": [
+                    "Loop"
+                ],
+                "category": "Agent Flows",
+                "description": "Loop back to Speed Ramp Designer for revision (max 2 iterations). After max, Loop Count Guard forces exit to Final Viral Package.",
+                "inputParams": [
+                    {
+                        "label": "Loop Back To",
+                        "name": "loopBackToNode",
+                        "type": "asyncOptions",
+                        "loadMethod": "listPreviousNodes",
+                        "freeSolo": true,
+                        "id": "loopAgentflow_0-input-loopBackToNode-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Max Loop Count",
+                        "name": "maxLoopCount",
+                        "type": "number",
+                        "default": 2,
+                        "id": "loopAgentflow_0-input-maxLoopCount-number",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "loopBackToNode": "llmAgentflow_1-Speed Ramp Designer",
+                    "maxLoopCount": 2
+                },
+                "outputAnchors": [],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 198,
+            "height": 66,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2030,
+                "y": 600
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_6",
+            "type": "agentFlow",
+            "position": {
+                "x": 2360,
+                "y": 50
+            },
+            "data": {
+                "id": "llmAgentflow_6",
+                "label": "Final Viral Package",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Final Viral Package \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_6-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_6-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_6-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_6-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_6-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_6-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a viral content production coordinator. Compile the complete viral speed ramp edit plan into a single, organized, actionable document.\n\nProduce the FINAL VIRAL EDIT PACKAGE in this exact format:\n\n---\n\n## FINAL VIRAL EDIT PACKAGE\n\n### 1. PROJECT OVERVIEW\n| Property | Value |\n|----------|-------|\n| Content Type | Viral Speed Ramp Edit |\n| Target Duration | [Xs] |\n| Target Platform | [platform] |\n| Aspect Ratio | [ratio] |\n| Music BPM | [X] |\n| Clip Count | [X] |\n| Source Frame Rate | [fps] |\n\n### 2. CLIP ORDER & ARRANGEMENT\n[From Clip Arrangement node \u2014 include full clip order table with in/out points]\n\n### 3. BEAT GRID & SYNC MAP\n[From Clip Arrangement \u2014 include full beat-to-action mapping]\n\n### 4. SPEED RAMP SPECIFICATIONS\n[From Speed Ramp Designer \u2014 include per-clip ramp specs with curves]\n\n### 5. EFFECTS & TRANSITIONS\n[From Viral Effects \u2014 include per-clip effects and per-cut transitions]\n\n### 6. SOUND DESIGN\n[From Sound & Finishing \u2014 include SFX placement, music notes, silence moments]\n\n**Sound Sourcing Shopping List** (every sound the editor needs to find or license):\n| # | Sound Needed | Category | Search Terms | Recommended Source | Priority |\n|---|-------------|----------|-------------|-------------------|----------|\n| 1 | [e.g., \"Cinematic sub-drop / bass slam\"] | Hits & Impacts | \"cinematic sub drop\", \"bass slam\", \"deep hit\" | Epidemic Sound, Splice, Artlist | Must-have |\n| 2 | [e.g., \"Riser whoosh ascending 2s\"] | SFX / Riser | \"riser whoosh\", \"sweep up\", \"tension build\" | Artlist, Freesound.org | Must-have |\n| 3 | [e.g., \"Car engine V16 roar\"] | Essentials | \"F1 engine roar\", \"race car pass\", \"V16 engine\" | YouTube (F1 official), SoundSnap | Must-have |\n| ... | ... | ... | ... | ... | ... |\n\n**Music Licensing Status**:\n- [ ] Track licensed/downloaded and in project folder\n- [ ] BPM marked in timeline (`{{$flow.state.music_bpm}} BPM`)\n- [ ] Drops marked at: `{{$flow.state.music_drops}}`\n- [ ] License allows platform use (check every target platform)\n\n### 7. COLOR & FINISHING\n[From Sound & Finishing \u2014 include grade settings, finishing effects stack]\n\n### 8. QA RESULTS\n[From Self-Critique \u2014 grade, issues fixed, viral potential score]\n\n### 9. STEP-BY-STEP EXECUTION ORDER\n\n```\nSTEP 1: Import all clips into After Effects project\nSTEP 2: Import music track\nSTEP 3: Create main composition at target resolution and frame rate\nSTEP 4: Place music on timeline and mark ALL beats with markers\nSTEP 5: Place clips in order per the arrangement plan\nSTEP 6: Enable Time Remapping on each clip\nSTEP 7: Design speed ramp keyframes per the spec (entry \u2192 peak \u2192 exit)\nSTEP 8: Shape curves in Graph Editor \u2014 F9 ease, then adjust handles\nSTEP 9: Trim comp to work area\nSTEP 10: Apply per-clip effects (turbulent displace, glow, etc.)\nSTEP 11: Build transitions between clips\nSTEP 12: Rotoscope/mask subjects where specified\nSTEP 13: Add particles/overlays\nSTEP 14: Pre-compose each clip with its effects\nSTEP 15: Add SFX \u2014 risers before peaks, impacts on peaks, whooshes on speed changes\nSTEP 16: Add silence moments\nSTEP 17: Check all beat syncs (scrub through beat by beat)\nSTEP 18: Apply finishing: CC Force Motion Blur (adj layer, top)\nSTEP 19: Apply finishing: Add Grain (adj layer)\nSTEP 20: Apply finishing: CC Vignette (adj layer)\nSTEP 21: Apply finishing: Sharpen (adj layer, last)\nSTEP 22: Color grade all clips (adj layer or Lumetri in Premiere)\nSTEP 23: Match color across clips\nSTEP 24: Full playback review at full quality\nSTEP 25: Check loop-ability (does end connect to start?)\nSTEP 26: Export at platform settings\n```\n\n### 10. TIME BUDGET (Skill-Level Adjusted)\n\n**Per-clip base time** (viral edits are clip-count-driven):\n\n| Skill Tier | Speed Ramp per Clip | Effect/Transition per Clip | Sound per Ramp | Color per Clip |\n|-----------|--------------------|-----------------------------|---------------|----------------|\n| **Beginner** | 25 min | 20 min | 15 min | 10 min |\n| **Intermediate** | 15 min | 12 min | 10 min | 6 min |\n| **Advanced** | 10 min | 8 min | 6 min | 4 min |\n| **Expert** | 6 min | 5 min | 4 min | 3 min |\n\n**Fixed** (independent of clips):\n\n| Phase | Beginner | Intermediate | Advanced | Expert |\n|-------|----------|--------------|----------|--------|\n| Setup & clip import | 30 min | 20 min | 15 min | 10 min |\n| Music/beat marking | 30 min | 20 min | 15 min | 10 min |\n| Review & revisions | 45 min | 30 min | 20 min | 15 min |\n\n**Math**:\n- Per-clip time = ramp + effects + sound + color (see rows above)\n- Multiply per-clip by `{{$flow.state.clip_count}}`\n- Add fixed phases\n- Round UP to nearest 0.5 hour\n\n**Output Format**:\n\n| Phase | Base (min) | Per-Clip \u00d7 {{$flow.state.clip_count}} | Phase Total | Skill Adjusted | Hours |\n|-------|-----------|--------------------------------------|-------------|----------------|-------|\n| Setup & clip import | [X] | \u2014 | [X] | [X] | [X.X] |\n| Music/beat marking | [X] | \u2014 | [X] | [X] | [X.X] |\n| Speed ramping | \u2014 | [X] | [X] | [X] | [X.X] |\n| Effects & transitions | \u2014 | [X] | [X] | [X] | [X.X] |\n| Sound design | \u2014 | [X] | [X] | [X] | [X.X] |\n| Color & finishing | \u2014 | [X] | [X] | [X] | [X.X] |\n| Review & revisions | [X] | \u2014 | [X] | [X] | [X.X] |\n| **TOTAL** | | | | | **[X.X hours]** |\n\n---\n\nIMPORTANT:\n- Include ALL tables and specifications from previous nodes in full.\n- The editor should need NOTHING except this document, their clips, and their music to complete the edit.\n- Keep it concise \u2014 viral editors work fast. No unnecessary prose."
+                        },
+                        {
+                            "role": "user",
+                            "content": "Compile the Final Viral Edit Package from:\n\nCLIP ARRANGEMENT:\n{{$flow.state.clip_arrangement}}\n\nSPEED RAMP PLAN:\n{{$flow.state.speed_ramp_plan}}\n\nVIRAL EFFECTS PLAN:\n{{$flow.state.viral_effects_plan}}\n\nSOUND & FINISHING PLAN:\n{{$flow.state.sound_finishing_plan}}\n\nCRITIQUE REPORT:\n{{$flow.state.critique_report}}\n\nCREATIVE STRATEGY:\n{{$flow.state.creative_strategy}}\n\nCLIP COUNT: {{$flow.state.clip_count}} clips\n\n(Viral flow assumes Intermediate skill level. If the editor is Beginner, multiply all time figures by 1.5. If Advanced/Expert, multiply by 0.85 / 0.7 respectively.)\n\nCompile into the Final Viral Edit Package. Include all specs in full. Keep it action-oriented.\n\nREVISED PLANS (if any \u2014 these override earlier sections):\n{{ $flow.state.revised_plans }}"
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "viral_package",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.9,
+                        "streaming": true,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_6-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2360,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "directReplyAgentflow_0",
+            "type": "agentFlow",
+            "position": {
+                "x": 2690,
+                "y": 50
+            },
+            "data": {
+                "id": "directReplyAgentflow_0",
+                "label": "Output",
+                "version": 1,
+                "name": "directReplyAgentflow",
+                "type": "DirectReply",
+                "color": "#4DB6AC",
+                "baseClasses": [
+                    "DirectReply"
+                ],
+                "category": "Agent Flows",
+                "description": "Output",
+                "inputParams": [
+                    {
+                        "label": "Message",
+                        "name": "directReplyMessage",
+                        "type": "string",
+                        "rows": 4,
+                        "acceptVariable": true,
+                        "id": "directReplyAgentflow_0-input-directReplyMessage-string",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "directReplyMessage": "{{ $flow.state.viral_package }}"
+                },
+                "outputAnchors": [],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 220,
+            "height": 90,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2690,
+                "y": 50
+            },
+            "dragging": false
+        },
+        {
+            "id": "conditionAgentflow_1",
+            "type": "agentFlow",
+            "position": {
+                "x": 2360,
+                "y": 350
+            },
+            "data": {
+                "id": "conditionAgentflow_1",
+                "label": "Loop Count Guard",
+                "version": 1,
+                "name": "conditionAgentflow",
+                "type": "Condition",
+                "color": "#BA68C8",
+                "baseClasses": [
+                    "Condition"
+                ],
+                "category": "Agent Flows",
+                "description": "Prevents infinite loops: after revision passes, force-continue to Final Viral Package (accept imperfect plan rather than hang)",
+                "inputParams": [
+                    {
+                        "label": "Conditions",
+                        "name": "conditions",
+                        "type": "array",
+                        "array": [
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    }
+                                ],
+                                "default": "string"
+                            },
+                            {
+                                "label": "Value 1",
+                                "name": "value1",
+                                "type": "string",
+                                "acceptVariable": true
+                            },
+                            {
+                                "label": "Operation",
+                                "name": "operation",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "Contains",
+                                        "name": "contains"
+                                    },
+                                    {
+                                        "label": "Equals",
+                                        "name": "equals"
+                                    }
+                                ],
+                                "default": "contains"
+                            },
+                            {
+                                "label": "Value 2",
+                                "name": "value2",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "conditionAgentflow_1-input-conditions-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "conditions": [
+                        {
+                            "type": "string",
+                            "value1": "{{ $flow.state.revision_count }}",
+                            "operation": "contains",
+                            "value2": "2"
+                        }
+                    ]
+                },
+                "outputAnchors": [
+                    {
+                        "id": "conditionAgentflow_1-output-0",
+                        "label": "Max loops hit \u2014 continue to package",
+                        "name": "conditionAgentflow"
+                    },
+                    {
+                        "id": "conditionAgentflow_1-output-1",
+                        "label": "Revisions remaining \u2014 loop again",
+                        "name": "conditionAgentflow"
+                    }
+                ],
+                "outputs": {
+                    "conditionAgentflow": ""
+                },
+                "selected": false
+            },
+            "width": 250,
+            "height": 110,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2360,
+                "y": 350
+            },
+            "dragging": false
+        },
+        {
+            "id": "llmAgentflow_7",
+            "type": "agentFlow",
+            "position": {
+                "x": 2690,
+                "y": 350
+            },
+            "data": {
+                "id": "llmAgentflow_7",
+                "label": "Final Viral Package (Loop Escape Path)",
+                "version": 1.1,
+                "name": "llmAgentflow",
+                "type": "LLM",
+                "color": "#64b5f6",
+                "baseClasses": [
+                    "LLM"
+                ],
+                "category": "Agent Flows",
+                "description": "Final Viral Package (Loop Escape Path) \u2014 LLM node",
+                "inputParams": [
+                    {
+                        "label": "Model",
+                        "name": "llmModel",
+                        "type": "asyncOptions",
+                        "loadMethod": "listModels",
+                        "loadConfig": true,
+                        "id": "llmAgentflow_7-input-llmModel-asyncOptions",
+                        "display": true
+                    },
+                    {
+                        "label": "Messages",
+                        "name": "llmMessages",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Role",
+                                "name": "role",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "name": "system"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "name": "assistant"
+                                    },
+                                    {
+                                        "label": "Developer",
+                                        "name": "developer"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "name": "user"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Content",
+                                "name": "content",
+                                "type": "string",
+                                "acceptVariable": true,
+                                "generateInstruction": true,
+                                "rows": 4
+                            }
+                        ],
+                        "id": "llmAgentflow_7-input-llmMessages-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Enable Memory",
+                        "name": "llmEnableMemory",
+                        "type": "boolean",
+                        "default": false,
+                        "optional": true,
+                        "id": "llmAgentflow_7-input-llmEnableMemory-boolean",
+                        "display": true
+                    },
+                    {
+                        "label": "Return Response As",
+                        "name": "llmReturnResponseAs",
+                        "type": "options",
+                        "options": [
+                            {
+                                "label": "User Message",
+                                "name": "userMessage"
+                            },
+                            {
+                                "label": "Assistant Message",
+                                "name": "assistantMessage"
+                            }
+                        ],
+                        "default": "userMessage",
+                        "optional": true,
+                        "id": "llmAgentflow_7-input-llmReturnResponseAs-options",
+                        "display": true
+                    },
+                    {
+                        "label": "Structured Output",
+                        "name": "llmStructuredOutput",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Type",
+                                "name": "type",
+                                "type": "options",
+                                "options": [
+                                    {
+                                        "label": "String",
+                                        "name": "string"
+                                    },
+                                    {
+                                        "label": "Enum",
+                                        "name": "enum"
+                                    },
+                                    {
+                                        "label": "Number",
+                                        "name": "number"
+                                    },
+                                    {
+                                        "label": "Boolean",
+                                        "name": "boolean"
+                                    },
+                                    {
+                                        "label": "Array",
+                                        "name": "array"
+                                    },
+                                    {
+                                        "label": "Object",
+                                        "name": "object"
+                                    }
+                                ]
+                            },
+                            {
+                                "label": "Enum Values",
+                                "name": "enumValues",
+                                "type": "string",
+                                "optional": true,
+                                "show": {
+                                    "type": "enum"
+                                }
+                            },
+                            {
+                                "label": "Description",
+                                "name": "description",
+                                "type": "string",
+                                "optional": true,
+                                "rows": 2
+                            }
+                        ],
+                        "id": "llmAgentflow_7-input-llmStructuredOutput-array",
+                        "display": true
+                    },
+                    {
+                        "label": "Update State",
+                        "name": "llmUpdateState",
+                        "type": "array",
+                        "optional": true,
+                        "acceptVariable": true,
+                        "array": [
+                            {
+                                "label": "Key",
+                                "name": "key",
+                                "type": "string"
+                            },
+                            {
+                                "label": "Value",
+                                "name": "value",
+                                "type": "string",
+                                "acceptVariable": true
+                            }
+                        ],
+                        "id": "llmAgentflow_7-input-llmUpdateState-array",
+                        "display": true
+                    }
+                ],
+                "inputAnchors": [],
+                "inputs": {
+                    "llmModel": "chatOpenAICustom",
+                    "llmMessages": [
+                        {
+                            "role": "system",
+                            "content": "You are a viral content production coordinator. Compile the complete viral speed ramp edit plan into a single, organized, actionable document.\n\nProduce the FINAL VIRAL EDIT PACKAGE in this exact format:\n\n---\n\n## FINAL VIRAL EDIT PACKAGE\n\n### 1. PROJECT OVERVIEW\n| Property | Value |\n|----------|-------|\n| Content Type | Viral Speed Ramp Edit |\n| Target Duration | [Xs] |\n| Target Platform | [platform] |\n| Aspect Ratio | [ratio] |\n| Music BPM | [X] |\n| Clip Count | [X] |\n| Source Frame Rate | [fps] |\n\n### 2. CLIP ORDER & ARRANGEMENT\n[From Clip Arrangement node \u2014 include full clip order table with in/out points]\n\n### 3. BEAT GRID & SYNC MAP\n[From Clip Arrangement \u2014 include full beat-to-action mapping]\n\n### 4. SPEED RAMP SPECIFICATIONS\n[From Speed Ramp Designer \u2014 include per-clip ramp specs with curves]\n\n### 5. EFFECTS & TRANSITIONS\n[From Viral Effects \u2014 include per-clip effects and per-cut transitions]\n\n### 6. SOUND DESIGN\n[From Sound & Finishing \u2014 include SFX placement, music notes, silence moments]\n\n**Sound Sourcing Shopping List** (every sound the editor needs to find or license):\n| # | Sound Needed | Category | Search Terms | Recommended Source | Priority |\n|---|-------------|----------|-------------|-------------------|----------|\n| 1 | [e.g., \"Cinematic sub-drop / bass slam\"] | Hits & Impacts | \"cinematic sub drop\", \"bass slam\", \"deep hit\" | Epidemic Sound, Splice, Artlist | Must-have |\n| 2 | [e.g., \"Riser whoosh ascending 2s\"] | SFX / Riser | \"riser whoosh\", \"sweep up\", \"tension build\" | Artlist, Freesound.org | Must-have |\n| 3 | [e.g., \"Car engine V16 roar\"] | Essentials | \"F1 engine roar\", \"race car pass\", \"V16 engine\" | YouTube (F1 official), SoundSnap | Must-have |\n| ... | ... | ... | ... | ... | ... |\n\n**Music Licensing Status**:\n- [ ] Track licensed/downloaded and in project folder\n- [ ] BPM marked in timeline (`{{$flow.state.music_bpm}} BPM`)\n- [ ] Drops marked at: `{{$flow.state.music_drops}}`\n- [ ] License allows platform use (check every target platform)\n\n### 7. COLOR & FINISHING\n[From Sound & Finishing \u2014 include grade settings, finishing effects stack]\n\n### 8. QA RESULTS\n[From Self-Critique \u2014 grade, issues fixed, viral potential score]\n\n### 9. STEP-BY-STEP EXECUTION ORDER\n\n```\nSTEP 1: Import all clips into After Effects project\nSTEP 2: Import music track\nSTEP 3: Create main composition at target resolution and frame rate\nSTEP 4: Place music on timeline and mark ALL beats with markers\nSTEP 5: Place clips in order per the arrangement plan\nSTEP 6: Enable Time Remapping on each clip\nSTEP 7: Design speed ramp keyframes per the spec (entry \u2192 peak \u2192 exit)\nSTEP 8: Shape curves in Graph Editor \u2014 F9 ease, then adjust handles\nSTEP 9: Trim comp to work area\nSTEP 10: Apply per-clip effects (turbulent displace, glow, etc.)\nSTEP 11: Build transitions between clips\nSTEP 12: Rotoscope/mask subjects where specified\nSTEP 13: Add particles/overlays\nSTEP 14: Pre-compose each clip with its effects\nSTEP 15: Add SFX \u2014 risers before peaks, impacts on peaks, whooshes on speed changes\nSTEP 16: Add silence moments\nSTEP 17: Check all beat syncs (scrub through beat by beat)\nSTEP 18: Apply finishing: CC Force Motion Blur (adj layer, top)\nSTEP 19: Apply finishing: Add Grain (adj layer)\nSTEP 20: Apply finishing: CC Vignette (adj layer)\nSTEP 21: Apply finishing: Sharpen (adj layer, last)\nSTEP 22: Color grade all clips (adj layer or Lumetri in Premiere)\nSTEP 23: Match color across clips\nSTEP 24: Full playback review at full quality\nSTEP 25: Check loop-ability (does end connect to start?)\nSTEP 26: Export at platform settings\n```\n\n### 10. TIME BUDGET (Skill-Level Adjusted)\n\n**Per-clip base time** (viral edits are clip-count-driven):\n\n| Skill Tier | Speed Ramp per Clip | Effect/Transition per Clip | Sound per Ramp | Color per Clip |\n|-----------|--------------------|-----------------------------|---------------|----------------|\n| **Beginner** | 25 min | 20 min | 15 min | 10 min |\n| **Intermediate** | 15 min | 12 min | 10 min | 6 min |\n| **Advanced** | 10 min | 8 min | 6 min | 4 min |\n| **Expert** | 6 min | 5 min | 4 min | 3 min |\n\n**Fixed** (independent of clips):\n\n| Phase | Beginner | Intermediate | Advanced | Expert |\n|-------|----------|--------------|----------|--------|\n| Setup & clip import | 30 min | 20 min | 15 min | 10 min |\n| Music/beat marking | 30 min | 20 min | 15 min | 10 min |\n| Review & revisions | 45 min | 30 min | 20 min | 15 min |\n\n**Math**:\n- Per-clip time = ramp + effects + sound + color (see rows above)\n- Multiply per-clip by `{{$flow.state.clip_count}}`\n- Add fixed phases\n- Round UP to nearest 0.5 hour\n\n**Output Format**:\n\n| Phase | Base (min) | Per-Clip \u00d7 {{$flow.state.clip_count}} | Phase Total | Skill Adjusted | Hours |\n|-------|-----------|--------------------------------------|-------------|----------------|-------|\n| Setup & clip import | [X] | \u2014 | [X] | [X] | [X.X] |\n| Music/beat marking | [X] | \u2014 | [X] | [X] | [X.X] |\n| Speed ramping | \u2014 | [X] | [X] | [X] | [X.X] |\n| Effects & transitions | \u2014 | [X] | [X] | [X] | [X.X] |\n| Sound design | \u2014 | [X] | [X] | [X] | [X.X] |\n| Color & finishing | \u2014 | [X] | [X] | [X] | [X.X] |\n| Review & revisions | [X] | \u2014 | [X] | [X] | [X.X] |\n| **TOTAL** | | | | | **[X.X hours]** |\n\n---\n\nIMPORTANT:\n- Include ALL tables and specifications from previous nodes in full.\n- The editor should need NOTHING except this document, their clips, and their music to complete the edit.\n- Keep it concise \u2014 viral editors work fast. No unnecessary prose."
+                        },
+                        {
+                            "role": "user",
+                            "content": "Compile the Final Viral Edit Package from:\n\nCLIP ARRANGEMENT:\n{{$flow.state.clip_arrangement}}\n\nSPEED RAMP PLAN:\n{{$flow.state.speed_ramp_plan}}\n\nVIRAL EFFECTS PLAN:\n{{$flow.state.viral_effects_plan}}\n\nSOUND & FINISHING PLAN:\n{{$flow.state.sound_finishing_plan}}\n\nCRITIQUE REPORT:\n{{$flow.state.critique_report}}\n\nCREATIVE STRATEGY:\n{{$flow.state.creative_strategy}}\n\nCLIP COUNT: {{$flow.state.clip_count}} clips\n\n(Viral flow assumes Intermediate skill level. If the editor is Beginner, multiply all time figures by 1.5. If Advanced/Expert, multiply by 0.85 / 0.7 respectively.)\n\nCompile into the Final Viral Edit Package. Include all specs in full. Keep it action-oriented.\n\nREVISED PLANS (if any \u2014 these override earlier sections):\n{{ $flow.state.revised_plans }}"
+                        }
+                    ],
+                    "llmEnableMemory": false,
+                    "llmReturnResponseAs": "userMessage",
+                    "llmStructuredOutput": "",
+                    "llmUpdateState": [
+                        {
+                            "key": "viral_package",
+                            "value": "{{ output }}"
+                        }
+                    ],
+                    "llmModelConfig": {
+                        "credential": "ahmedx",
+                        "modelName": "gemini-2.0-flash",
+                        "temperature": 0.9,
+                        "streaming": true,
+                        "basepath": "http://localhost:4981/openai/v1",
+                        "llmModel": "chatOpenAICustom"
+                    }
+                },
+                "outputAnchors": [
+                    {
+                        "id": "llmAgentflow_7-output-llmAgentflow",
+                        "label": "LLM",
+                        "name": "llmAgentflow"
+                    }
+                ],
+                "outputs": {},
+                "selected": false
+            },
+            "width": 213,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2690,
+                "y": 350
+            },
+            "dragging": false
+        }
+    ],
+    "edges": [
+        {
+            "source": "startAgentflow_0",
+            "sourceHandle": "startAgentflow_0-output-startAgentflow",
+            "target": "llmAgentflow_0",
+            "targetHandle": "llmAgentflow_0",
+            "id": "startAgentflow_0-startAgentflow_0-output-startAgentflow-llmAgentflow_0-llmAgentflow_0",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_0",
+            "sourceHandle": "llmAgentflow_0-output-llmAgentflow",
+            "target": "llmAgentflow_1",
+            "targetHandle": "llmAgentflow_1",
+            "id": "llmAgentflow_0-llmAgentflow_0-output-llmAgentflow-llmAgentflow_1-llmAgentflow_1",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_1",
+            "sourceHandle": "llmAgentflow_1-output-llmAgentflow",
+            "target": "llmAgentflow_2",
+            "targetHandle": "llmAgentflow_2",
+            "id": "llmAgentflow_1-llmAgentflow_1-output-llmAgentflow-llmAgentflow_2-llmAgentflow_2",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_2",
+            "sourceHandle": "llmAgentflow_2-output-llmAgentflow",
+            "target": "llmAgentflow_3",
+            "targetHandle": "llmAgentflow_3",
+            "id": "llmAgentflow_2-llmAgentflow_2-output-llmAgentflow-llmAgentflow_3-llmAgentflow_3",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_3",
+            "sourceHandle": "llmAgentflow_3-output-llmAgentflow",
+            "target": "llmAgentflow_4",
+            "targetHandle": "llmAgentflow_4",
+            "id": "llmAgentflow_3-llmAgentflow_3-output-llmAgentflow-llmAgentflow_4-llmAgentflow_4",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_4",
+            "sourceHandle": "llmAgentflow_4-output-llmAgentflow",
+            "target": "conditionAgentflow_0",
+            "targetHandle": "conditionAgentflow_0",
+            "id": "llmAgentflow_4-llmAgentflow_4-output-llmAgentflow-conditionAgentflow_0-conditionAgentflow_0",
+            "type": "agentFlow"
+        },
+        {
+            "source": "conditionAgentflow_0",
+            "sourceHandle": "conditionAgentflow_0-output-0",
+            "target": "llmAgentflow_6",
+            "targetHandle": "llmAgentflow_6",
+            "id": "conditionAgentflow_0-conditionAgentflow_0-output-0-llmAgentflow_6-llmAgentflow_6",
+            "type": "agentFlow"
+        },
+        {
+            "source": "conditionAgentflow_0",
+            "sourceHandle": "conditionAgentflow_0-output-1",
+            "target": "llmAgentflow_5",
+            "targetHandle": "llmAgentflow_5",
+            "id": "conditionAgentflow_0-conditionAgentflow_0-output-1-llmAgentflow_5-llmAgentflow_5",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_6",
+            "sourceHandle": "llmAgentflow_6-output-llmAgentflow",
+            "target": "directReplyAgentflow_0",
+            "targetHandle": "directReplyAgentflow_0",
+            "id": "llmAgentflow_6-llmAgentflow_6-output-llmAgentflow-directReplyAgentflow_0-directReplyAgentflow_0",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_5",
+            "sourceHandle": "llmAgentflow_5-output-llmAgentflow",
+            "target": "conditionAgentflow_1",
+            "targetHandle": "conditionAgentflow_1",
+            "id": "llmAgentflow_5-to-guard",
+            "type": "agentFlow"
+        },
+        {
+            "source": "conditionAgentflow_1",
+            "sourceHandle": "conditionAgentflow_1-output-0",
+            "target": "llmAgentflow_7",
+            "targetHandle": "llmAgentflow_7",
+            "id": "guard-exit-to-package",
+            "type": "agentFlow"
+        },
+        {
+            "source": "conditionAgentflow_1",
+            "sourceHandle": "conditionAgentflow_1-output-1",
+            "target": "loopAgentflow_0",
+            "targetHandle": "loopAgentflow_0",
+            "id": "guard-loop-again",
+            "type": "agentFlow"
+        },
+        {
+            "source": "llmAgentflow_7",
+            "sourceHandle": "llmAgentflow_7-output-llmAgentflow",
+            "target": "directReplyAgentflow_0",
+            "targetHandle": "directReplyAgentflow_0",
+            "id": "llmAgentflow_7-llmAgentflow_7-output-llmAgentflow-directReplyAgentflow_0-directReplyAgentflow_0",
+            "type": "agentFlow"
+        }
+    ]
+}
