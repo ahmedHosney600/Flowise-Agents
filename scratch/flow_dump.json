@@ -1,0 +1,836 @@
+{
+  "nodes": {
+    "startAgentflow_0": {
+      "type": "agentFlow",
+      "name": "startAgentflow",
+      "label": "Start",
+      "formInputs": [
+        {
+          "type": "string",
+          "label": "What is the video about?",
+          "name": "videoTopic"
+        },
+        {
+          "type": "options",
+          "label": "Primary goal",
+          "name": "primaryGoal",
+          "addOptions": [
+            {
+              "option": "Sell a product"
+            },
+            {
+              "option": "Educate"
+            },
+            {
+              "option": "Entertain"
+            },
+            {
+              "option": "Brand awareness"
+            },
+            {
+              "option": "Tell a story"
+            },
+            {
+              "option": "Document an event"
+            },
+            {
+              "option": "Inspire action"
+            },
+            {
+              "option": "Go viral"
+            },
+            {
+              "option": "Other"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Core message (one sentence)",
+          "name": "coreMessage"
+        },
+        {
+          "type": "options",
+          "label": "Content type",
+          "name": "contentType",
+          "addOptions": [
+            {
+              "option": "Commercial/Ad"
+            },
+            {
+              "option": "YouTube video"
+            },
+            {
+              "option": "Short-form Reel/TikTok"
+            },
+            {
+              "option": "Corporate/Brand video"
+            },
+            {
+              "option": "Documentary"
+            },
+            {
+              "option": "Music video"
+            },
+            {
+              "option": "Event highlight"
+            },
+            {
+              "option": "Product showcase"
+            },
+            {
+              "option": "Tutorial"
+            },
+            {
+              "option": "Talking head"
+            },
+            {
+              "option": "Showreel"
+            },
+            {
+              "option": "Short film"
+            },
+            {
+              "option": "Real estate"
+            },
+            {
+              "option": "Mixed media"
+            },
+            {
+              "option": "Motion graphics"
+            },
+            {
+              "option": "Other"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Target duration",
+          "name": "targetDuration",
+          "addOptions": [
+            {
+              "option": "15 seconds"
+            },
+            {
+              "option": "30 seconds"
+            },
+            {
+              "option": "60 seconds"
+            },
+            {
+              "option": "2 minutes"
+            },
+            {
+              "option": "3-5 minutes"
+            },
+            {
+              "option": "5-10 minutes"
+            },
+            {
+              "option": "10+ minutes"
+            },
+            {
+              "option": "Flexible"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Target audience description",
+          "name": "targetAudience"
+        },
+        {
+          "type": "options",
+          "label": "Primary platform",
+          "name": "primaryPlatform",
+          "addOptions": [
+            {
+              "option": "YouTube"
+            },
+            {
+              "option": "TikTok"
+            },
+            {
+              "option": "Instagram Reels"
+            },
+            {
+              "option": "Instagram Feed"
+            },
+            {
+              "option": "LinkedIn"
+            },
+            {
+              "option": "Facebook"
+            },
+            {
+              "option": "TV/Broadcast"
+            },
+            {
+              "option": "Cinema"
+            },
+            {
+              "option": "Website"
+            },
+            {
+              "option": "Presentation"
+            },
+            {
+              "option": "Other"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Secondary platform (if any)",
+          "name": "secondaryPlatform",
+          "addOptions": [
+            {
+              "option": "None"
+            },
+            {
+              "option": "YouTube"
+            },
+            {
+              "option": "TikTok"
+            },
+            {
+              "option": "Instagram Reels"
+            },
+            {
+              "option": "Instagram Feed"
+            },
+            {
+              "option": "LinkedIn"
+            },
+            {
+              "option": "Facebook"
+            },
+            {
+              "option": "TV/Broadcast"
+            },
+            {
+              "option": "Website"
+            },
+            {
+              "option": "Other"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "How will viewers discover this?",
+          "name": "discoveryMethod",
+          "addOptions": [
+            {
+              "option": "Organic search"
+            },
+            {
+              "option": "Paid ads"
+            },
+            {
+              "option": "Social feed scroll"
+            },
+            {
+              "option": "Direct link"
+            },
+            {
+              "option": "Embedded on website"
+            },
+            {
+              "option": "TV broadcast"
+            },
+            {
+              "option": "Mixed"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Will viewers watch with sound?",
+          "name": "soundAssumption",
+          "addOptions": [
+            {
+              "option": "Mostly sound ON"
+            },
+            {
+              "option": "Mostly sound OFF"
+            },
+            {
+              "option": "50/50 split"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Viewer mindset",
+          "name": "viewerMindset",
+          "addOptions": [
+            {
+              "option": "Actively searching"
+            },
+            {
+              "option": "Passively scrolling"
+            },
+            {
+              "option": "In a meeting/presentation"
+            },
+            {
+              "option": "At an event"
+            },
+            {
+              "option": "Relaxing at home"
+            },
+            {
+              "option": "Mixed"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Script / voiceover status",
+          "name": "scriptStatus",
+          "addOptions": [
+            {
+              "option": "Full script ready"
+            },
+            {
+              "option": "Outline/bullet points"
+            },
+            {
+              "option": "No script yet"
+            },
+            {
+              "option": "Will improvise"
+            },
+            {
+              "option": "Voiceover will be recorded"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Visual assets available",
+          "name": "visualAssets",
+          "addOptions": [
+            {
+              "option": "Original footage (already filmed)"
+            },
+            {
+              "option": "Will shoot original footage"
+            },
+            {
+              "option": "Stock footage only"
+            },
+            {
+              "option": "Both original + stock"
+            },
+            {
+              "option": "Product photos only"
+            },
+            {
+              "option": "Screen recordings"
+            },
+            {
+              "option": "Graphics/animation"
+            },
+            {
+              "option": "None yet"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Music status",
+          "name": "musicStatus",
+          "addOptions": [
+            {
+              "option": "Specific track selected"
+            },
+            {
+              "option": "Genre preference"
+            },
+            {
+              "option": "Mood preference only"
+            },
+            {
+              "option": "No preference"
+            },
+            {
+              "option": "Will be composed"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Music details (if any)",
+          "name": "musicDetails"
+        },
+        {
+          "type": "options",
+          "label": "Brand guidelines?",
+          "name": "brandGuidelines",
+          "addOptions": [
+            {
+              "option": "Yes - strict guidelines"
+            },
+            {
+              "option": "Yes - flexible guidelines"
+            },
+            {
+              "option": "No brand guidelines"
+            },
+            {
+              "option": "Personal brand"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Target emotions (pick up to 3)",
+          "name": "targetEmotions"
+        },
+        {
+          "type": "options",
+          "label": "Desired energy / vibe",
+          "name": "energyVibe",
+          "addOptions": [
+            {
+              "option": "High energy / fast-paced"
+            },
+            {
+              "option": "Cinematic / premium"
+            },
+            {
+              "option": "Calm / elegant"
+            },
+            {
+              "option": "Raw / authentic"
+            },
+            {
+              "option": "Playful / fun"
+            },
+            {
+              "option": "Dark / moody"
+            },
+            {
+              "option": "Corporate / professional"
+            },
+            {
+              "option": "Mixed"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Reference videos (if any)",
+          "name": "referenceVideos"
+        },
+        {
+          "type": "string",
+          "label": "Styles to AVOID",
+          "name": "stylesToAvoid"
+        },
+        {
+          "type": "options",
+          "label": "Narrative structure preference",
+          "name": "narrativePreference",
+          "addOptions": [
+            {
+              "option": "Linear story"
+            },
+            {
+              "option": "Before/after"
+            },
+            {
+              "option": "Problem to solution"
+            },
+            {
+              "option": "Montage"
+            },
+            {
+              "option": "Interview-based"
+            },
+            {
+              "option": "Day-in-the-life"
+            },
+            {
+              "option": "Testimonial"
+            },
+            {
+              "option": "Abstract/artistic"
+            },
+            {
+              "option": "No preference"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Mandatory elements",
+          "name": "mandatoryElements"
+        },
+        {
+          "type": "string",
+          "label": "Sensitive considerations",
+          "name": "sensitiveConsiderations"
+        },
+        {
+          "type": "options",
+          "label": "Quality tier",
+          "name": "qualityTier",
+          "addOptions": [
+            {
+              "option": "Premium / cinematic"
+            },
+            {
+              "option": "Professional / polished"
+            },
+            {
+              "option": "Good / clean"
+            },
+            {
+              "option": "Raw / authentic"
+            },
+            {
+              "option": "Budget-friendly"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Subtitles needed?",
+          "name": "subtitlesNeeded",
+          "addOptions": [
+            {
+              "option": "Yes - hardcoded"
+            },
+            {
+              "option": "Yes - optional/CC"
+            },
+            {
+              "option": "No"
+            }
+          ]
+        },
+        {
+          "type": "options",
+          "label": "Standalone or series?",
+          "name": "seriesStatus",
+          "addOptions": [
+            {
+              "option": "Standalone video"
+            },
+            {
+              "option": "Part of a series"
+            },
+            {
+              "option": "First in a new series"
+            }
+          ]
+        },
+        {
+          "type": "string",
+          "label": "Series details (if applicable)",
+          "name": "seriesDetails"
+        }
+      ],
+      "startState": [
+        {
+          "key": "project_brief",
+          "value": ""
+        },
+        {
+          "key": "creative_strategy",
+          "value": ""
+        },
+        {
+          "key": "narrative_structure",
+          "value": ""
+        },
+        {
+          "key": "retention_map",
+          "value": ""
+        },
+        {
+          "key": "storyboard",
+          "value": ""
+        },
+        {
+          "key": "pacing_map",
+          "value": ""
+        },
+        {
+          "key": "critique_report",
+          "value": ""
+        },
+        {
+          "key": "critique_grade",
+          "value": ""
+        },
+        {
+          "key": "revision_count",
+          "value": "0"
+        },
+        {
+          "key": "final_package",
+          "value": ""
+        },
+        {
+          "key": "model_name",
+          "value": "gemini-2.0-flash"
+        },
+        {
+          "key": "model_basepath",
+          "value": "http://localhost:4981/openai/v1"
+        },
+        {
+          "key": "model_credential",
+          "value": "ahmedx"
+        },
+        {
+          "key": "model_temperature",
+          "value": "0.9"
+        },
+        {
+          "key": "model_streaming",
+          "value": "true"
+        }
+      ]
+    },
+    "llmAgentflow_0": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Brief Builder",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "humanInputAgentflow_0": {
+      "type": "agentFlow",
+      "name": "humanInputAgentflow",
+      "label": "Review Brief",
+      "question": ""
+    },
+    "llmAgentflow_1": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Creative Strategy",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "llmAgentflow_2": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Narrative Structure",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "llmAgentflow_3": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Retention Engineer",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "llmAgentflow_4": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Storyboard Builder",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "llmAgentflow_5": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Pacing & Rhythm",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "llmAgentflow_6": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "Self-Critique",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "conditionAgentflow_0": {
+      "type": "agentFlow",
+      "name": "conditionAgentflow",
+      "label": "Grade Check",
+      "systemPrompt": "",
+      "conditions": []
+    },
+    "loopAgentflow_0": {
+      "type": "agentFlow",
+      "name": "loopAgentflow",
+      "label": "Loop to Storyboard",
+      "loopTo": ""
+    },
+    "llmAgentflow_7": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "QA & Final Package",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    },
+    "directReplyAgentflow_0": {
+      "type": "agentFlow",
+      "name": "directReplyAgentflow",
+      "label": "Final Package"
+    },
+    "conditionAgentflow_1": {
+      "type": "agentFlow",
+      "name": "conditionAgentflow",
+      "label": "Loop Count Guard",
+      "systemPrompt": "",
+      "conditions": []
+    },
+    "llmAgentflow_8": {
+      "type": "agentFlow",
+      "name": "llmAgentflow",
+      "label": "QA & Final Package (Loop-Limit Exit)",
+      "systemPrompt": "",
+      "humanPrompt": "",
+      "stateUpdate": [],
+      "model": ""
+    }
+  },
+  "edges": [
+    {
+      "source": "startAgentflow_0",
+      "sourceHandle": "startAgentflow_0-output-startAgentflow",
+      "target": "llmAgentflow_0",
+      "targetHandle": "llmAgentflow_0",
+      "id": "startAgentflow_0-startAgentflow_0-output-startAgentflow-llmAgentflow_0-llmAgentflow_0",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_0",
+      "sourceHandle": "llmAgentflow_0-output-llmAgentflow",
+      "target": "humanInputAgentflow_0",
+      "targetHandle": "humanInputAgentflow_0",
+      "id": "llmAgentflow_0-llmAgentflow_0-output-llmAgentflow-humanInputAgentflow_0-humanInputAgentflow_0",
+      "type": "agentFlow"
+    },
+    {
+      "source": "humanInputAgentflow_0",
+      "sourceHandle": "humanInputAgentflow_0-output-0",
+      "target": "llmAgentflow_1",
+      "targetHandle": "llmAgentflow_1",
+      "id": "humanInputAgentflow_0-humanInputAgentflow_0-output-0-llmAgentflow_1-llmAgentflow_1",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_1",
+      "sourceHandle": "llmAgentflow_1-output-llmAgentflow",
+      "target": "llmAgentflow_2",
+      "targetHandle": "llmAgentflow_2",
+      "id": "llmAgentflow_1-llmAgentflow_1-output-llmAgentflow-llmAgentflow_2-llmAgentflow_2",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_2",
+      "sourceHandle": "llmAgentflow_2-output-llmAgentflow",
+      "target": "llmAgentflow_3",
+      "targetHandle": "llmAgentflow_3",
+      "id": "llmAgentflow_2-llmAgentflow_2-output-llmAgentflow-llmAgentflow_3-llmAgentflow_3",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_3",
+      "sourceHandle": "llmAgentflow_3-output-llmAgentflow",
+      "target": "llmAgentflow_4",
+      "targetHandle": "llmAgentflow_4",
+      "id": "llmAgentflow_3-llmAgentflow_3-output-llmAgentflow-llmAgentflow_4-llmAgentflow_4",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_4",
+      "sourceHandle": "llmAgentflow_4-output-llmAgentflow",
+      "target": "llmAgentflow_5",
+      "targetHandle": "llmAgentflow_5",
+      "id": "llmAgentflow_4-llmAgentflow_4-output-llmAgentflow-llmAgentflow_5-llmAgentflow_5",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_5",
+      "sourceHandle": "llmAgentflow_5-output-llmAgentflow",
+      "target": "llmAgentflow_6",
+      "targetHandle": "llmAgentflow_6",
+      "id": "llmAgentflow_5-llmAgentflow_5-output-llmAgentflow-llmAgentflow_6-llmAgentflow_6",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_6",
+      "sourceHandle": "llmAgentflow_6-output-llmAgentflow",
+      "target": "conditionAgentflow_0",
+      "targetHandle": "conditionAgentflow_0",
+      "id": "llmAgentflow_6-llmAgentflow_6-output-llmAgentflow-conditionAgentflow_0-conditionAgentflow_0",
+      "type": "agentFlow"
+    },
+    {
+      "source": "conditionAgentflow_0",
+      "sourceHandle": "conditionAgentflow_0-output-0",
+      "target": "llmAgentflow_7",
+      "targetHandle": "llmAgentflow_7",
+      "id": "conditionAgentflow_0-conditionAgentflow_0-output-0-llmAgentflow_7-llmAgentflow_7",
+      "type": "agentFlow"
+    },
+    {
+      "source": "conditionAgentflow_0",
+      "sourceHandle": "conditionAgentflow_0-output-1",
+      "target": "conditionAgentflow_1",
+      "targetHandle": "conditionAgentflow_1",
+      "id": "condition-to-guard",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_7",
+      "sourceHandle": "llmAgentflow_7-output-llmAgentflow",
+      "target": "directReplyAgentflow_0",
+      "targetHandle": "directReplyAgentflow_0",
+      "id": "llmAgentflow_7-llmAgentflow_7-output-llmAgentflow-directReplyAgentflow_0-directReplyAgentflow_0",
+      "type": "agentFlow"
+    },
+    {
+      "source": "conditionAgentflow_1",
+      "sourceHandle": "conditionAgentflow_1-output-0",
+      "target": "llmAgentflow_8",
+      "targetHandle": "llmAgentflow_8",
+      "id": "guard-exit-to-package-v2",
+      "type": "agentFlow"
+    },
+    {
+      "source": "conditionAgentflow_1",
+      "sourceHandle": "conditionAgentflow_1-output-1",
+      "target": "loopAgentflow_0",
+      "targetHandle": "loopAgentflow_0",
+      "id": "guard-loop-again",
+      "type": "agentFlow"
+    },
+    {
+      "source": "llmAgentflow_8",
+      "sourceHandle": "llmAgentflow_8-output-llmAgentflow",
+      "target": "directReplyAgentflow_0",
+      "targetHandle": "directReplyAgentflow_0",
+      "id": "llmAgentflow_8-llmAgentflow_8-output-llmAgentflow-directReplyAgentflow_0-directReplyAgentflow_0",
+      "type": "agentFlow"
+    }
+  ]
+}
